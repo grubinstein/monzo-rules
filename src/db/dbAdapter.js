@@ -1,15 +1,15 @@
-import Request from "./models/Request.js";
+import Transaction from "./models/Transaction.js";
 
 export const transactionExists = async (transaction) => {
-  const { id } = transaction;
-  const count = await Request.countDocuments({ _id: id });
-  return count > 0;
+  const transactionId = transaction.id;
+  const result = await Transaction.findOne({ where: { transactionId } });
+  return !!result;
 };
 
 export const addTransaction = async (transaction) => {
-  const { id: _id, dedupe_id } = transaction;
-  await Request.create({
-    _id,
+  const { id: transactionId, dedupe_id } = transaction;
+  await Transaction.create({
+    transactionId,
     dedupe_id,
     transaction,
   });
