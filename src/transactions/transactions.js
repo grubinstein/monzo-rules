@@ -1,12 +1,12 @@
 import evaluatingFunctions from "./evaluations.js";
-import runMacro from "../macros/macro.js";
-import fs from "fs";
+import runMacros from "../macros/macro.js";
+import * as db from "../db/dbAdapter.js";
+import * as colour from "../colourLogger.js";
 
 export const processTransaction = async (transaction) => {
-  const rules = JSON.parse(fs.readFileSync("rules.json"));
-  const transactionRules = rules.transaction;
-  for (let i = 0; i < transactionRules.length; i++) {
-    const rule = transactionRules[i];
+  const rules = await db.getAllRules();
+  for (let i = 0; i < rules.length; i++) {
+    const rule = rules[i];
     await runRuleForTransaction(rule, transaction).catch((e) => console.log(e));
   }
 };
@@ -15,11 +15,11 @@ const runRuleForTransaction = async (rule, transaction) => {
   const filters = rule.filters;
   const pass = filters.every(evaluateFilterForTransaction(transaction));
   if (pass) {
-    console.log(
-      "\x1b[32m%s\x1b[0m",
-      `Rule ${rule.name} PASSED for ${transaction.description}`
+    colour.log(
+      `Rule ${rule.name} PASSED for ${transaction.description}`,
+      transaction.id
     );
-    await runMacro(rule, transaction);
+    await runMacros(rule.macros, transaction);
   }
 };
 

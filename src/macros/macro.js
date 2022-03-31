@@ -1,14 +1,24 @@
 import workers from "./workers.js";
 
-const runMacro = async (rule, transaction) => {
-  if (!rule.tasks || !rule.tasks.length) {
+const runMacros = async (macros, transaction) => {
+  if (!macros || !macros.length) {
     return;
   }
-  const tasks = [...rule.tasks];
+  for (let i = 0; i < macros.length; i++) {
+    const macro = macros[i];
+    await runMacro(macro, transaction);
+  }
+};
+
+const runMacro = async (macro, transaction) => {
+  if (!macro.tasks || !macro.tasks.length) {
+    return;
+  }
+  const tasks = [...macro.tasks];
   const variables = {
     transactionAmount: transaction.amount,
     transactionId: transaction.id,
-    ruleName: rule.name,
+    macroName: macro.name,
   };
   await performNextTask(variables, tasks);
 };
@@ -24,4 +34,4 @@ const performNextTask = async (variables, tasks) => {
   }
 };
 
-export default runMacro;
+export default runMacros;

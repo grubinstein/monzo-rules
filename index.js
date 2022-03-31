@@ -9,7 +9,6 @@ import bodyParser from "body-parser";
 import { handleWebhookPost } from "./src/monzo/webhookHandler.js";
 
 //mongoose.connect("mongodb://127.0.0.1:27018/monzo?replicaSet=rs0");
-sequelize.sync({ force: true });
 
 const app = express();
 

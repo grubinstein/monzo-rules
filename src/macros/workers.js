@@ -18,7 +18,11 @@ const depositWorker = async (variables, task) => {
   if (!amountValue) {
     throw new Error("Amount could not be resolved");
   }
-  await deposit(pot, amountValue, variables.transactionId + variables.ruleName);
+  await deposit(
+    pot,
+    amountValue,
+    variables.transactionId + variables.macroName
+  );
   return variables;
 };
 
@@ -31,7 +35,7 @@ const withdrawWorker = async (variables, task) => {
   await withdraw(
     pot,
     amountValue,
-    variables.transactionId + variables.ruleName
+    variables.transactionId + variables.macroName
   );
   return variables;
 };
