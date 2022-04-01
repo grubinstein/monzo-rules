@@ -1,4 +1,4 @@
-import { addTestRules } from "./test.js";
+import { addTestRules } from "./testRules.js";
 import { registerWebHook } from "./src/monzo/monzoClient.js";
 import app from "./src/app.js";
 

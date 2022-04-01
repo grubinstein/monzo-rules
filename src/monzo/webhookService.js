@@ -1,24 +1,6 @@
-import * as db from "../db/dbAdapter.js";
-import * as colour from "../colourLogger.js";
 import { processTransaction } from "../transactions/transactions.js";
+import createWebhookService from "./createWebhookService.js";
 
-export const handleWebhookPost = async (req, res) => {
-  const transaction = req.body.data;
-  transaction.callType = req.body.type;
-  const { id } = transaction;
-  const requestExists = await db.requestExists(transaction);
-  if (requestExists) {
-    colour.log(
-      `Repeat: ${transaction.description} ${transaction.id} ${transaction.callType}`,
-      id
-    );
-    return res.status(200).send();
-  }
-  colour.log(
-    `Handling ${transaction.description} ${transaction.id} ${transaction.callType}`,
-    id
-  );
-  await db.addRequest(transaction);
-  await processTransaction(transaction);
-  res.status(200).send();
-};
+const webhookService = createWebhookService(processTransaction);
+
+export default webhookService;
