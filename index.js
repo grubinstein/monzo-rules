@@ -6,9 +6,10 @@ import {
   registerWebHook,
 } from "./src/monzo/monzoClient.js";
 import bodyParser from "body-parser";
-import { handleWebhookPost } from "./src/monzo/webhookHandler.js";
+import { handleWebhookPost } from "./src/monzo/webhookService.js";
+import { addTestRules } from "./test.js";
 
-//mongoose.connect("mongodb://127.0.0.1:27018/monzo?replicaSet=rs0");
+sequelize.sync();
 
 const app = express();
 
@@ -27,3 +28,7 @@ app.listen(3000, () => {
 });
 
 await registerWebHook();
+
+if (process.env.NODE_ENV == "development") {
+  addTestRules();
+}
