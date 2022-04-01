@@ -1,6 +1,9 @@
 import chalk from "chalk";
 
 export const log = (message, id) => {
+  if (process.env.NODE_ENV == "test") {
+    return;
+  }
   const colour = idToColour(id);
   console.log(chalk.hex(colour)(message));
 };

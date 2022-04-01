@@ -1,27 +1,6 @@
-import express from "express";
-import sequelize from "./src/db/sequelize.js";
-import {
-  authorize,
-  authReturn,
-  registerWebHook,
-} from "./src/monzo/monzoClient.js";
-import bodyParser from "body-parser";
-import { handleWebhookPost } from "./src/monzo/webhookService.js";
 import { addTestRules } from "./test.js";
-
-sequelize.sync();
-
-const app = express();
-
-app.use(bodyParser.json());
-
-app.get("/auth", authorize);
-
-app.get("/authorizereturn", authReturn);
-
-app.get("/", (req, res) => res.send("Hello"));
-
-app.post("/hook", handleWebhookPost);
+import { registerWebHook } from "./src/monzo/monzoClient.js";
+import app from "./src/app.js";
 
 app.listen(3000, () => {
   console.log("App listening on port 3000");

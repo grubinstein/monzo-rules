@@ -4,8 +4,8 @@
   "description": "Monzo API client that allows programming rules and macros with triggers",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "cross-env NODE_ENV=development nodemon index.js",
+    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch"
   },
   "author": "",
   "license": "ISC",
@@ -19,6 +19,11 @@
     "mongoose": "^6.2.9",
     "qs": "^6.10.3",
     "sequelize": "^6.17.0",
-    "sqlite3": "^5.0.2"
+    "sqlite3": "npm:@vscode/sqlite3@^5.0.7"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "jest": "^27.5.1",
+    "supertest": "^6.2.2"
   }
 }
