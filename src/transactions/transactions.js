@@ -13,6 +13,10 @@ export const processTransaction = async (transaction) => {
 
 const runRuleForTransaction = async (rule, transaction) => {
   const filters = rule.filters;
+  const callTypeFilter = filters.find((f) => f.type == "call");
+  if (!callTypeFilter) {
+    filters.unshift({ type: "call", call: "created" });
+  }
   const pass = filters.every(evaluateFilterForTransaction(transaction));
   if (pass) {
     colour.log(

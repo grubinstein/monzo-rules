@@ -3,14 +3,17 @@ import sequelize from "../sequelize.js";
 
 const Model = Sequelize.Model;
 
-class Transaction extends Model {}
+class Request extends Model {}
 
-Transaction.init(
+Request.init(
   {
     transactionId: {
       type: Sequelize.STRING,
     },
     dedupe_id: {
+      type: Sequelize.STRING,
+    },
+    callType: {
       type: Sequelize.STRING,
     },
     transaction: {
@@ -19,8 +22,8 @@ Transaction.init(
   },
   {
     sequelize,
-    modelname: "transaction",
+    modelname: "request",
   }
 );
 
-export default Transaction;
+export default Request;

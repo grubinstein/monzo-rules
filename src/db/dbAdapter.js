@@ -1,18 +1,21 @@
-import Transaction from "./models/Transaction.js";
+import Request from "./models/Request.js";
 import MacroHasRule from "./models/MacroHasRule.js";
 const { Rule, Macro } = MacroHasRule;
 
-export const transactionExists = async (transaction) => {
-  const transactionId = transaction.id;
-  const result = await Transaction.findOne({ where: { transactionId } });
+export const requestExists = async (transaction) => {
+  const { id: transactionId, callType } = transaction;
+  const result = await Request.findOne({
+    where: { transactionId, callType },
+  });
   return !!result;
 };
 
-export const addTransaction = async (transaction) => {
-  const { id: transactionId, dedupe_id } = transaction;
-  await Transaction.create({
+export const addRequest = async (transaction) => {
+  const { id: transactionId, dedupe_id, callType } = transaction;
+  await Request.create({
     transactionId,
     dedupe_id,
+    callType,
     transaction,
   });
 };
