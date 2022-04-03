@@ -1,3 +1,5 @@
 /node_modules
 /config
 database.sqlite
+key.pem
+cert.pem
