@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "cross-env NODE_ENV=development nodemon index.js",
-    "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --watch"
+    "test": "yarn node --experimental-vm-modules $(yarn bin jest) --watchAll --verbose"
   },
   "author": "",
   "license": "ISC",
@@ -24,6 +24,7 @@
   "devDependencies": {
     "cross-env": "^7.0.3",
     "jest": "^27.5.1",
+    "jest-esm-transformer": "^1.0.0",
     "supertest": "^6.2.2"
   }
 }
