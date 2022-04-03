@@ -1,6 +1,6 @@
 import https from "https";
 import fs from "fs";
-import { addDevRules } from "./test/devRules.js";
+import { addDevRules } from "./devRules.js";
 import app from "./src/app.js";
 
 app.listen(3000, () => {
