@@ -1,200 +1,287 @@
-import axios from "axios";
-import axiosRetry from "axios-retry";
-import config from "config";
-import crypto from "crypto";
-import qs from "qs";
-import url from "url";
-import handleMonzoErrors from "../errors/axiosErrors.js";
+import readline from "readline";
 
-let accessToken = config.get("accessToken");
-const accountId = config.get("accountId");
-let refreshToken;
-
-const monzoClient = axios.create({ baseURL: "https://api.monzo.com" });
-monzoClient.defaults.headers.common["Authorization"] = "Bearer " + accessToken;
-
-monzoClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    if (error.response.status == 403 && !originalRequest._retry) {
-      console.log("Access token expired. Refreshing.");
-      originalRequest._retry = true;
-      const newAccessToken = await refreshAccessToken();
-      monzoClient.defaults.headers.common["Authorization"] =
-        "Bearer " + newAccessToken;
-      return monzoClient(originalRequest);
-    }
-    return Promise.reject(error);
-  }
-);
-
-axiosRetry(monzoClient, {
-  retries: 3,
-  retryDelay: axiosRetry.exponentialDelay,
-});
-
-const refreshAccessToken = async () => {
-  const clientId = config.get("clientId");
-  const clientSecret = config.get("clientSecret");
-  const params = new url.URLSearchParams({
-    grant_type: "refresh_token",
-    client_id: clientId,
-    client_secret: clientSecret,
-    refresh_token: refreshToken,
+function askQuestion(query) {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
   });
-  const response = await monzoClient
-    .post("/oauth2/token", params.toString())
-    .catch(handleMonzoErrors);
-  console.log("Received new access token from Monzo");
-  console.log(response.data);
-  refreshToken = response.data.refresh_token;
-  accessToken = response.data.access_token;
-  return accessToken;
-};
 
-export const registerWebHook = async () => {
-  const appUrl = config.get("appUrl");
-  const webhookUrl = appUrl + "/hook";
-  const webhooks = await listWebhooks();
-  if (
-    webhooks.find(
-      (webhook) => webhook.account_id == accountId && webhook.url == webhookUrl
-    )
-  ) {
-    return;
-  }
-  const params = new url.URLSearchParams({
-    account_id: accountId,
-    webhookUrl,
-  });
-  await monzoClient
-    .post("/webhooks", params.toString())
-    .catch(handleMonzoErrors);
-};
-
-export const listWebhooks = async () => {
-  const response = await monzoClient
-    .get(`/webhooks?account_id=${accountId}`)
-    .catch(handleMonzoErrors);
-  console.log(response.data.webhooks);
-  return response.data.webhooks;
-};
-
-export const removeUnnecessaryWebhooks = async () => {
-  const webhooks = await listWebhooks();
-  webhooks.pop();
-  for (let i = 0; i < webhooks.length; i++) {
-    const webhook = webhooks[i];
-    console.log(webhook);
-    await monzoClient
-      .delete(`/webhooks/${webhook.id}`)
-      .catch(handleMonzoErrors);
-  }
-};
-
-export const authorize = (req, res) => {
-  const clientId = config.get("clientId");
-  const appUrl = config.get("appUrl");
-  const redirectUri = appUrl + "/authorizereturn";
-  const stateToken = crypto.randomBytes(8).toString("hex");
-  const url = `https://auth.monzo.com/?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&state=${stateToken}`;
-  res.redirect(url);
-};
-
-export const authReturn = (req, res) => {
-  console.log(req.params);
-};
-
-export const getPots = async () => {
-  const response = await monzoClient.get(
-    `/pots?current_account_id=${accountId}`
-  );
-  return response.data.pots;
-};
-
-const getCurrentBalance = async () => {
-  const response = await monzoClient.get(`/balance?account_id=${accountId}`);
-  return response.data.balance;
-};
-
-const getPot = async (potName) => {
-  const pots = await getPots();
-  return pots.find((p) => p.name == potName);
-};
-
-export const getPotBalance = async (potName) => {
-  if (potName == "current") {
-    const currentBalance = await getCurrentBalance();
-    return currentBalance;
-  }
-  const pot = await getPot(potName);
-  return pot.balance;
-};
-
-export const getPotId = async (potName) => {
-  const pot = await getPot(potName);
-  return pot.id;
-};
-
-export const withdraw = async (pot, amount, id) => {
-  const potId = await getPotId(pot);
-  const dedupe_id = id || crypto.randomBytes(16).toString("hex");
-  const params = new url.URLSearchParams({
-    destination_account_id: accountId,
-    source_account_id: accountId,
-    amount,
-    dedupe_id,
-  });
-  await monzoClient
-    .put(`/pots/${potId}/withdraw`, params.toString())
-    .catch(handleMonzoErrors);
-};
-
-export const deposit = async (pot, amount, id) => {
-  const potId = await getPotId(pot);
-  const dedupe_id = id || crypto.randomBytes(16).toString("hex");
-  const params = new url.URLSearchParams({
-    destination_account_id: accountId,
-    source_account_id: accountId,
-    amount,
-    dedupe_id,
-  });
-  await monzoClient
-    .put(`/pots/${potId}/deposit`, params.toString())
-    .catch(handleMonzoErrors);
-};
-
-export const getTransactions = async (from, to) => {
-  const since = from ? new Date(from).toISOString() : undefined;
-  const before = to ? new Date(to).toISOString() : undefined;
-  const response = await monzoClient
-    .get("/transactions", {
-      params: {
-        account_id: accountId,
-        since,
-        before,
-      },
+  return new Promise((resolve) =>
+    rl.question(query, (ans) => {
+      rl.close();
+      resolve(ans);
     })
-    .catch(handleMonzoErrors);
-  return response.data.transactions;
+  );
+}
+
+const createMonzoClient = async ({
+  axios,
+  axiosRetry,
+  config,
+  crypto,
+  qs,
+  url,
+  handleMonzoErrors,
+  db,
+}) => {
+  const getMonzoClient = async (user) => {
+    const { accessToken, accountId } = user;
+    const monzoClient = axios.create({ baseURL: "https://api.monzo.com" });
+
+    monzoClient.defaults.headers.common["Authorization"] =
+      "Bearer " + accessToken;
+
+    monzoClient.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalRequest = error.config;
+        if (error.response.data.code == "forbidden.insufficient_permissions") {
+          console.log("Monzo returned insufficient permissions error");
+          await askQuestion("Have you granted permissions in the app?");
+          return monzoClient(originalRequest).catch(handleMonzoErrors);
+        }
+        if (error.response.status == 403 && !originalRequest._retry) {
+          console.log("Access token expired. Refreshing.");
+          originalRequest._retry = true;
+          const newAccessToken = await refreshAccessToken(user);
+          monzoClient.defaults.headers.common["Authorization"] =
+            "Bearer " + newAccessToken;
+          originalRequest.headers["Authorization"] = "Bearer " + newAccessToken;
+          return monzoClient(originalRequest).catch(handleMonzoErrors);
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    axiosRetry(monzoClient, {
+      retries: 3,
+      retryDelay: axiosRetry.exponentialDelay,
+    });
+
+    return monzoClient;
+  };
+
+  const refreshAccessToken = async (user) => {
+    const clientId = config.get("clientId");
+    const clientSecret = config.get("clientSecret");
+    const refreshToken = await db.getRefreshToken(user);
+    const params = new url.URLSearchParams({
+      grant_type: "refresh_token",
+      client_id: clientId,
+      client_secret: clientSecret,
+      refresh_token: refreshToken,
+    });
+    const response = await axios
+      .post("https://api.monzo.com/oauth2/token", params.toString())
+      .catch(handleMonzoErrors);
+    await db.storeUserAccessData(response.data);
+    const accessToken = response.data.access_token;
+    return accessToken;
+  };
+
+  const registerWebHook = async (user) => {
+    const appUrl = config.get("appUrl");
+    const webhookUrl = appUrl + "/hook";
+    const webhooks = await listWebhooks(user);
+    if (
+      webhooks.find(
+        (webhook) =>
+          webhook.account_id == user.accountId && webhook.url == webhookUrl
+      )
+    ) {
+      return;
+    }
+    const params = new url.URLSearchParams({
+      account_id: user.accountId,
+      url: webhookUrl,
+    });
+    const monzoClient = await getMonzoClient(user);
+    console.log("Registering webhook for user " + user.id);
+    await monzoClient
+      .post("/webhooks", params.toString())
+      .catch(handleMonzoErrors);
+  };
+
+  const listWebhooks = async (user) => {
+    const monzoClient = await getMonzoClient(user);
+    const response = await monzoClient
+      .get(`/webhooks?account_id=${user.accountId}`)
+      .catch(handleMonzoErrors);
+    return response.data.webhooks;
+  };
+
+  const removeUnnecessaryWebhooks = async (user) => {
+    const webhooks = await listWebhooks(user);
+    const monzoClient = await getMonzoClient(user);
+    for (let i = 0; i < webhooks.length; i++) {
+      const webhook = webhooks[i];
+      await monzoClient
+        .delete(`/webhooks/${webhook.id}`)
+        .catch(handleMonzoErrors);
+    }
+  };
+
+  const authorize = (req, res) => {
+    const clientId = config.get("clientId");
+    const httpsAppUrl = config.get("httpsAppUrl");
+    const redirectUri = httpsAppUrl + "/authorizereturn";
+    const stateToken = crypto.randomBytes(32).toString("hex");
+    //store stateToken
+    const url = `https://auth.monzo.com/?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&state=${stateToken}`;
+    res.redirect(url);
+  };
+
+  const authReturn = async (req, res) => {
+    const { code, state } = req.query;
+    //check stateToken
+    const client_id = config.get("clientId");
+    const client_secret = config.get("clientSecret");
+    const httpsAppUrl = config.get("httpsAppUrl");
+    const redirect_uri = httpsAppUrl + "/authorizereturn";
+    const params = {
+      grant_type: "authorization_code",
+      client_id,
+      client_secret,
+      redirect_uri,
+      code,
+    };
+    const response = await axios
+      .post(`https://api.monzo.com/oauth2/token`, qs.stringify(params))
+      .catch(handleMonzoErrors);
+    const user = await db.storeUserAccessData(response.data);
+    res.send("Thanks for authorizing");
+    await addDefaultAccountId(user);
+    await registerWebHook(user);
+  };
+
+  const addDefaultAccountId = async (user) => {
+    const accounts = await getAccounts(user);
+    const accountId = accounts[0].id;
+    await db.setAccountId(user, accountId);
+  };
+
+  const getAccounts = async (user) => {
+    const monzoClient = await getMonzoClient(user);
+    const response = await monzoClient.get(`/accounts?account_type=uk_retail`);
+    return response.data.accounts;
+  };
+
+  const getPots = async (user) => {
+    const monzoClient = await getMonzoClient(user);
+    const response = await monzoClient.get(
+      `/pots?current_account_id=${user.accountId}`
+    );
+    return response.data.pots;
+  };
+
+  const getCurrentBalance = async (user) => {
+    const monzoClient = await getMonzoClient(user);
+    const response = await monzoClient.get(
+      `/balance?account_id=${user.accountId}`
+    );
+    return response.data.balance;
+  };
+
+  const getPot = async (user, potName) => {
+    const pots = await getPots(user);
+    return pots.find((p) => p.name == potName);
+  };
+
+  const getPotBalance = async (user, potName) => {
+    if (potName == "current") {
+      const currentBalance = await getCurrentBalance(user);
+      return currentBalance;
+    }
+    const pot = await getPot(user, potName);
+    return pot.balance;
+  };
+
+  const getPotId = async (user, potName) => {
+    const pot = await getPot(user, potName);
+    return pot.id;
+  };
+
+  const withdraw = async (user, potName, amount, id) => {
+    const potId = await getPotId(user, potName);
+    const dedupe_id = id || crypto.randomBytes(16).toString("hex");
+    const params = new url.URLSearchParams({
+      destination_account_id: user.accountId,
+      source_account_id: user.accountId,
+      amount,
+      dedupe_id,
+    });
+    const monzoClient = await getMonzoClient(user);
+    await monzoClient
+      .put(`/pots/${potId}/withdraw`, params.toString())
+      .catch(handleMonzoErrors);
+  };
+
+  const deposit = async (user, pot, amount, id) => {
+    const potId = await getPotId(user, pot);
+    const dedupe_id = id || crypto.randomBytes(16).toString("hex");
+    const params = new url.URLSearchParams({
+      destination_account_id: user.accountId,
+      source_account_id: user.accountId,
+      amount,
+      dedupe_id,
+    });
+    const monzoClient = await getMonzoClient(user);
+    await monzoClient
+      .put(`/pots/${potId}/deposit`, params.toString())
+      .catch(handleMonzoErrors);
+  };
+
+  const getTransactions = async (user, from, to) => {
+    const since = from ? new Date(from).toISOString() : undefined;
+    const before = to ? new Date(to).toISOString() : undefined;
+    const monzoClient = await getMonzoClient(user);
+    const response = await monzoClient
+      .get("/transactions", {
+        params: {
+          account_id: user.accountId,
+          since,
+          before,
+        },
+      })
+      .catch(handleMonzoErrors);
+    return response.data.transactions;
+  };
+
+  const notify = async (
+    user,
+    title,
+    body,
+    image_url = "https://www.animatedimages.org/data/media/198/animated-frog-image-0015.gif"
+  ) => {
+    const params = {
+      account_id: user.accountId,
+      type: "basic",
+      params: {
+        title,
+        body,
+        image_url,
+      },
+    };
+    const monzoClient = await getMonzoClient(user);
+    await monzoClient
+      .post(`/feed`, qs.stringify(params))
+      .catch(handleMonzoErrors);
+  };
+
+  return {
+    registerWebHook,
+    listWebhooks,
+    removeUnnecessaryWebhooks,
+    authorize,
+    authReturn,
+    getPots,
+    getPotBalance,
+    getPotId,
+    withdraw,
+    deposit,
+    getTransactions,
+    notify,
+  };
 };
 
-export const notify = async (
-  title,
-  body,
-  image_url = "https://www.animatedimages.org/data/media/198/animated-frog-image-0015.gif"
-) => {
-  const params = {
-    account_id: accountId,
-    type: "basic",
-    params: {
-      title,
-      body,
-      image_url,
-    },
-  };
-  await monzoClient
-    .post(`/feed`, qs.stringify(params))
-    .catch(handleMonzoErrors);
-};
+export default createMonzoClient;
