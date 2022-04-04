@@ -42,7 +42,7 @@ const evaluateTextFilter = (filter, transaction) => {
 };
 
 const escapeWildcards = (pattern, value) => {
-  const hasEscapedWildcard = /\\\*/.test(pattern) || !/\\\\\*/.test(pattern);
+  const hasEscapedWildcard = /\\\*/.test(pattern) && !/\\\\\*/.test(pattern);
   if (hasEscapedWildcard) {
     pattern = pattern.replace(/\\\*/g, "¬");
     value = value.replace(/\*/g, "¬");
