@@ -16,7 +16,7 @@ const createWebhookHandler = ({ processTransaction, db, logger }) => {
   };
 
   const logRequest = (newRequest, transaction) => {
-    const { description, id, callType, dedupe_id } = transaction;
+    const { description, id, callType } = transaction;
     logger.log(
       `${newRequest ? "Handling" : "Repeat"}: ${description} ${id} ${callType}`,
       id
