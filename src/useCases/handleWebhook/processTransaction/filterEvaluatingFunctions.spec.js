@@ -320,5 +320,16 @@ describe("amount filter", () => {
       const result = text(filter, transaction);
       expect(result).toBe(true);
     });
+    it("allows case insensitive matching", () => {
+      const transaction = { ...mockTransaction, description: "ThIs text" };
+      const filter = {
+        type: "text",
+        field: "description",
+        pattern: "tHi*Ext",
+        caseInsensitive: true,
+      };
+      const result = text(filter, transaction);
+      expect(result).toBe(true);
+    });
   });
 });
