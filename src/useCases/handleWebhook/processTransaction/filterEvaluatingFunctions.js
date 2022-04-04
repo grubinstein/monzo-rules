@@ -11,6 +11,9 @@ const evaluateDirectionFilter = (filter, transaction) => {
 
 const evaluateAmountFilter = (filter, transaction) => {
   const { test, value } = filter;
+  if (value < 0) {
+    throw new Error("Filter value must be greater than or equal to 0");
+  }
   const { amount } = transaction;
   switch (test) {
     case "gte":
@@ -60,12 +63,12 @@ const getValue = (transaction, field) => {
 const convertToRegex = (str, caseInsensitive) => {
   if (caseInsensitive) {
     return new RegExp(
-      preg_quote(str).replace(/\\\*/g, ".*").replace(/\\\?/g, "."),
+      "^" + preg_quote(str).replace(/\\\*/g, ".*").replace(/\\\?/, ".") + "$",
       "i"
     );
   } else {
     return new RegExp(
-      preg_quote(str).replace(/\\\*/g, ".*").replace(/\\\?/g, ".")
+      "^" + preg_quote(str).replace(/\\\*/g, ".*").replace(/\\\?/g, ".") + "$"
     );
   }
 };
