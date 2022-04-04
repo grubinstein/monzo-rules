@@ -1,6 +1,9 @@
 const evaluateDirectionFilter = (filter, transaction) => {
   const { direction } = filter;
   const { amount } = transaction;
+  if (amount == 0) {
+    return false;
+  }
   const positiveFilter = direction == "in";
   const positiveTransaction = amount >= 0;
   return positiveFilter == positiveTransaction;
