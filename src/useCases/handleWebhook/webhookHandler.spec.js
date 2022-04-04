@@ -1,14 +1,14 @@
 import { jest } from "@jest/globals";
-import sequelize from "../db/sequelize.js";
-import Request from "../db/models/Request.js";
-import webhookComposer from "../../test/mockWebhookComposer.js";
-import mockWebhookRequest from "../../test/mockWebhookRequest.js";
+import sequelize from "../../db/sequelize.js";
+import Request from "../../db/models/Request.js";
+import webhookComposer from "../../../test/mockWebhookComposer.js";
+import mockWebhookRequest from "../../../test/mockWebhookRequest.js";
 
 const processTransaction = jest.fn();
-const colour = { log: jest.fn() };
+const logger = { log: jest.fn() };
 const webhookHandler = webhookComposer({
   processTransaction,
-  colour,
+  logger,
 }).webhookHandler;
 
 const mockResponse = () => {

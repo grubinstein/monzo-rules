@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
-import mockWebhookComposer from "../../test/mockWebhookComposer.js";
-import mockTransaction from "../../test/mockTransaction.js";
+import mockWebhookComposer from "../../../../test/mockWebhookComposer.js";
+import mockTransaction from "../../../../test/mockTransaction.js";
 
 jest.useFakeTimers();
 const runMacros = jest.fn();
@@ -11,13 +11,13 @@ const evaluatingFunctions = {
   call: jest.fn(),
 };
 const db = { getAllRules: jest.fn() };
-const colour = { log: jest.fn().mockName("colour.log") };
+const logger = { log: jest.fn().mockName("logger.log") };
 
 const processTransaction = mockWebhookComposer({
   runMacros,
   evaluatingFunctions,
   db,
-  colour,
+  logger,
 }).processTransaction;
 
 beforeEach(() => {
@@ -33,7 +33,6 @@ const mockProcessTransaction = async (transaction, rules, mockValues) => {
   for (const mock of mockValues) {
     const { func, value } = mock;
     evaluatingFunctions[func].mockReturnValueOnce(value);
-    console.log(`Mocking ${func} to be ${value}`);
   }
   db.getAllRules.mockReturnValue(rules);
   await processTransaction(mockTransaction);
@@ -47,10 +46,10 @@ describe("runs rules for transaction", () => {
       [{ name: "rule1", filters: [] }],
       [{ func: "call", value: true }]
     );
-    expect(colour.log.mock.calls[0][0]).toBe(
+    expect(logger.log.mock.calls[0][0]).toBe(
       `Rule rule1 PASSED for ${mockTransaction.description}`
     );
-    expect(colour.log.mock.calls[0][1]).toBe(mockTransaction.id);
+    expect(logger.log.mock.calls[0][1]).toBe(mockTransaction.id);
   });
   it("calls runMacros if no rules and call type is created", async () => {
     await mockProcessTransaction(

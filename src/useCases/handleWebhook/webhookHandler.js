@@ -1,4 +1,4 @@
-const createWebhookHandler = ({ processTransaction, db, colour }) => {
+const createWebhookHandler = ({ processTransaction, db, logger }) => {
   const storeRequest = async (transaction) => {
     const created = await db.addRequestIfNew(transaction);
     return created;
@@ -17,7 +17,7 @@ const createWebhookHandler = ({ processTransaction, db, colour }) => {
 
   const logRequest = (newRequest, transaction) => {
     const { description, id, callType, dedupe_id } = transaction;
-    colour.log(
+    logger.log(
       `${newRequest ? "Handling" : "Repeat"}: ${description} ${id} ${callType}`,
       id
     );

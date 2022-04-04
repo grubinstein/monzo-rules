@@ -1,4 +1,4 @@
-const createRunMacros = (workers, colour) => {
+const createRunMacros = (workers, logger) => {
   const runMacros = async (macros, transaction) => {
     if (!macros || !macros.length) {
       return;
@@ -30,7 +30,7 @@ const createRunMacros = (workers, colour) => {
     if (tasks.length) {
       await performNextTask(newVariables, tasks);
     } else {
-      colour.log("Completed running tasks.", variables.transactionId);
+      logger.log("Completed running tasks.", variables.transactionId);
     }
   };
 

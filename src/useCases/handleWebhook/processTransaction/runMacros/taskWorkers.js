@@ -1,7 +1,7 @@
-const createWorkers = (monzoClient) => {
+const createWorkers = (monzo) => {
   const balanceWorker = async (variables, task) => {
     const { pot, variable } = task;
-    const balance = await monzoClient.getPotBalance(variables.user, pot);
+    const balance = await monzo.getPotBalance(variables.user, pot);
     variables[variable] = balance;
     return variables;
   };
@@ -12,7 +12,7 @@ const createWorkers = (monzoClient) => {
     if (!amountValue) {
       throw new Error("Amount could not be resolved");
     }
-    await monzoClient.deposit(
+    await monzo.deposit(
       variables.user,
       pot,
       amountValue,
@@ -27,7 +27,7 @@ const createWorkers = (monzoClient) => {
     if (!amountValue) {
       throw new Error("Amount could not be resolved");
     }
-    await monzoClient.withdraw(
+    await monzo.withdraw(
       variables.user,
       pot,
       amountValue,
@@ -38,7 +38,7 @@ const createWorkers = (monzoClient) => {
 
   const notifyWorker = async (variables, task) => {
     const { title, body, url } = task;
-    await monzoClient.notify(variables.user, title, body, url);
+    await monzo.notify(variables.user, title, body, url);
     return variables;
   };
 

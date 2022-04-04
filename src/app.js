@@ -1,8 +1,9 @@
 import express from "express";
 import sequelize from "./db/sequelize.js";
-import monzoClient from "./monzo/monzoClientComposer.js";
-import webhookService from "./monzo/webhookHandlerComposer.js";
 import bodyParser from "body-parser";
+import userAuthRouter from "../src/useCases/authorizeMonzoUser/userAuthRouter.js";
+import webhookRouter from "../src/useCases/handleWebhook/webhookRouter.js";
+import selectMonzoAccountRouter from "../src/useCases/selectMonzoAccount/selectMonzoAccountRouter.js";
 
 await sequelize.sync();
 
@@ -10,12 +11,10 @@ const app = express();
 
 app.use(bodyParser.json());
 
-app.get("/auth", monzoClient.authorize);
+app.use(userAuthRouter);
 
-app.get("/authorizereturn", monzoClient.authReturn);
+app.use(webhookRouter);
 
-app.get("/", (req, res) => res.send("Hello"));
-
-app.post("/hook", webhookService);
+app.use(selectMonzoAccountRouter);
 
 export default app;

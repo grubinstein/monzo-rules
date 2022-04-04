@@ -1,25 +1,24 @@
-import createWebhookHandler from "../src/monzo/webhookHandler.js";
-import createProcessTransaction from "../src/transactions/processTransaction.js";
-import createRunMacros from "../src/macros/macro.js";
-import createWorkers from "../src/macros/workers.js";
-import defaultEvaluatingFunctions from "../src/transactions/processTransaction.js";
+import createWebhookHandler from "../src/useCases/handleWebhook/webhookHandler.js";
+import createProcessTransaction from "../src/useCases/handleWebhook/processTransaction/processTransaction.js";
+import createRunMacros from "../src/useCases/handleWebhook/processTransaction/runMacros/runMacros.js";
+import createWorkers from "../src/useCases/handleWebhook/processTransaction/runMacros/taskWorkers.js";
+import defaultEvaluatingFunctions from "../src/useCases/handleWebhook/processTransaction/filterEvaluatingFunctions.js";
 import defaultAxios from "axios";
 import defaultAxiosRetry from "axios-retry";
 import defaultConfig from "config";
 import defaultCrypto from "crypto";
 import defaultQs from "qs";
-import defaultUrl from "url";
 import defaultHandleMonzoErrors from "../src/errors/axiosErrors.js";
-import createMonzoClient from "../src/monzo/monzoClient.js";
+import createMonzoClient from "../src/monzo/monzoApiAdapter.js";
 import * as defaultDb from "../src/db/dbAdapter.js";
-import * as defaultColour from "../src/colourLogger.js";
+import * as defaultLogger from "../src/logging/colourLogger.js";
 
 const createMockWebhookService = ({
   workers: mockWorkers,
   runMacros: mockRunMacros,
   evaluatingFunctions: mockEvaluatingFunctions,
   db: mockDb,
-  colour: mockColour,
+  logger: mockLogger,
   processTransaction: mockProcessTransaction,
   monzoClient: mockMonzoClient,
   axios: mockAxios,
@@ -27,7 +26,6 @@ const createMockWebhookService = ({
   config: mockConfig,
   crypto: mockCrypto,
   qs: mockQs,
-  url: mockUrl,
   handleMonzoErrors: mockHandleMonzoErrors,
 }) => {
   const monzoClientDependencies = {
@@ -36,7 +34,6 @@ const createMockWebhookService = ({
     config: mockConfig || defaultConfig,
     crypto: mockCrypto || defaultCrypto,
     qs: mockQs || defaultQs,
-    url: mockUrl || defaultUrl,
     handleMonzoErrors: mockHandleMonzoErrors || defaultHandleMonzoErrors,
   };
   const monzoClient =
@@ -50,7 +47,7 @@ const createMockWebhookService = ({
     evaluatingFunctions: mockEvaluatingFunctions || defaultEvaluatingFunctions,
     runMacros,
     db: mockDb || defaultDb,
-    colour: mockColour || defaultColour,
+    logger: mockLogger || defaultLogger,
   };
 
   const processTransaction =
@@ -60,7 +57,7 @@ const createMockWebhookService = ({
   const webhookHandlerDependencies = {
     processTransaction,
     db: mockDb || defaultDb,
-    colour: mockColour || defaultColour,
+    logger: mockLogger || defaultLogger,
   };
 
   const webhookHandler = createWebhookHandler(webhookHandlerDependencies);

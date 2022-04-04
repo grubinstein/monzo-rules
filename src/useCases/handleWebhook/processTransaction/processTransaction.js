@@ -2,7 +2,7 @@ const createProcessTransaction = ({
   evaluatingFunctions,
   runMacros,
   db,
-  colour,
+  logger,
 }) => {
   const processTransaction = async (transaction) => {
     const rules = await db.getAllRules();
@@ -23,7 +23,7 @@ const createProcessTransaction = ({
   };
 
   const logRulePassedForTransaction = (rule, transaction) => {
-    colour.log(
+    logger.log(
       `Rule ${rule.name} PASSED for ${transaction.description}`,
       transaction.id
     );
