@@ -30,10 +30,21 @@ const evaluateAmountFilter = (filter, transaction) => {
 };
 
 const evaluateTextFilter = (filter, transaction) => {
-  const { field, pattern, caseInsensitive } = filter;
+  const { field, caseInsensitive } = filter;
+  let { pattern } = filter;
+  let value = getValue(transaction, field);
+  ({ pattern, value } = escapeWildcards(pattern, value));
   const regex = convertToRegex(pattern, caseInsensitive);
-  const value = getValue(transaction, field);
   return regex.test(value);
+};
+
+const escapeWildcards = (pattern, value) => {
+  const hasEscapedWildcard = /\\\*/.test(pattern) || !/\\\\\*/.test(pattern);
+  if (hasEscapedWildcard) {
+    pattern = pattern.replace(/\\\*/g, "¬");
+    value = value.replace(/\*/g, "¬");
+  }
+  return { pattern, value };
 };
 
 const evaluateCallTypeFilter = (filter, transaction) => {

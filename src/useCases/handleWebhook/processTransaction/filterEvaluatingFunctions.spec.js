@@ -290,5 +290,35 @@ describe("amount filter", () => {
       const result = text(filter, transaction);
       expect(result).toBe(true);
     });
+    it("allows * to be escaped with \\ and passes when it should", () => {
+      const transaction = { ...mockTransaction, description: "this*text" };
+      const filter = {
+        type: "text",
+        field: "description",
+        pattern: `this\\\*text`,
+      };
+      const result = text(filter, transaction);
+      expect(result).toBe(true);
+    });
+    it("allows * to be escaped with \\ and fails when it should", () => {
+      const transaction = { ...mockTransaction, description: `this\\*text` };
+      const filter = {
+        type: "text",
+        field: "description",
+        pattern: `this\\\*text`,
+      };
+      const result = text(filter, transaction);
+      expect(result).toBe(false);
+    });
+    it("allows \\* to be escaped as \\\\*", () => {
+      const transaction = { ...mockTransaction, description: `this\\*text` };
+      const filter = {
+        type: "text",
+        field: "description",
+        pattern: `this\\\\\*text`,
+      };
+      const result = text(filter, transaction);
+      expect(result).toBe(true);
+    });
   });
 });
