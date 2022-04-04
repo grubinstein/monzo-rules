@@ -4,9 +4,9 @@ const evaluateDirectionFilter = (filter, transaction) => {
   if (amount == 0) {
     return false;
   }
-  const positiveFilter = direction == "in";
-  const positiveTransaction = amount >= 0;
-  return positiveFilter == positiveTransaction;
+  const isPositiveFilter = direction == "in";
+  const isPositiveTransaction = amount > 0;
+  return isPositiveFilter == isPositiveTransaction;
 };
 
 const evaluateAmountFilter = (filter, transaction) => {
