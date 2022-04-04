@@ -33,6 +33,9 @@ const evaluateTextFilter = (filter, transaction) => {
   const { field, caseInsensitive } = filter;
   let { pattern } = filter;
   let value = getValue(transaction, field);
+  if (!value) {
+    return false;
+  }
   ({ pattern, value } = escapeWildcards(pattern, value));
   const regex = convertToRegex(pattern, caseInsensitive);
   return regex.test(value);

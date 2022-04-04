@@ -332,6 +332,26 @@ describe("text filter", () => {
     const result = text(filter, transaction);
     expect(result).toBe(true);
   });
+  it("returns false if top level field path does not resolve", () => {
+    const transaction = { ...mockTransaction };
+    const filter = {
+      type: "text",
+      field: "non-existentField",
+      pattern: "some text",
+    };
+    const result = text(filter, transaction);
+    expect(result).toBe(false);
+  });
+  it("returns false if top level field path does not resolve", () => {
+    const transaction = { ...mockTransaction };
+    const filter = {
+      type: "text",
+      field: "non.existentField",
+      pattern: "some text",
+    };
+    const result = text(filter, transaction);
+    expect(result).toBe(false);
+  });
 });
 
 describe("call type filter", () => {
