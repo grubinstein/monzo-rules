@@ -1,5 +1,6 @@
 /node_modules
 /config
+/coverage
 database.sqlite
 key.pem
 cert.pem
