@@ -1,6 +1,7 @@
 import { jest } from "@jest/globals";
 import mockWebhookComposer from "../../../../test/mockWebhookComposer.js";
 import mockTransaction from "../../../../test/mockTransaction.js";
+import { text } from "express";
 
 jest.useFakeTimers();
 const runMacros = jest.fn();
@@ -26,20 +27,59 @@ beforeEach(() => {
 });
 
 const mockProcessTransaction = async (transaction, rules, mockValues) => {
-  const callTypeFilter = mockValues.find((mock) => mock.func == "call");
+  const callTypeFilter =
+    mockValues && mockValues.find((mock) => mock.func == "call");
   if (!callTypeFilter) {
-    evaluatingFunctions.call.mockReturnValueOnce(true);
+    evaluatingFunctions.call.mockReturnValue(true);
   }
-  for (const mock of mockValues) {
-    const { func, value } = mock;
-    evaluatingFunctions[func].mockReturnValueOnce(value);
+  if (mockValues) {
+    for (const mock of mockValues) {
+      const { func, value } = mock;
+      evaluatingFunctions[func].mockReturnValueOnce(value);
+    }
   }
   db.getAllRules.mockReturnValue(rules);
-  await processTransaction(mockTransaction);
+  await Promise.resolve();
+  await processTransaction(transaction);
   await Promise.resolve();
 };
 
 describe("runs rules for transaction", () => {
+  it("calls evaluating function with filter and transaction until one fails", async () => {
+    await mockProcessTransaction(
+      mockTransaction,
+      [
+        {
+          name: "rule1",
+          filters: [
+            { type: "direction" },
+            { type: "text" },
+            { type: "amount" },
+            { type: "call" },
+          ],
+        },
+      ],
+      [
+        { func: "direction", value: true },
+        { func: "text", value: true },
+        { func: "amount", value: false },
+        { func: "call", value: true },
+      ]
+    );
+    expect(evaluatingFunctions.direction.mock.calls[0]).toEqual([
+      { type: "direction" },
+      mockTransaction,
+    ]);
+    expect(evaluatingFunctions.text.mock.calls[0]).toEqual([
+      { type: "text" },
+      mockTransaction,
+    ]);
+    expect(evaluatingFunctions.amount.mock.calls[0]).toEqual([
+      { type: "amount" },
+      mockTransaction,
+    ]);
+    expect(evaluatingFunctions.call).not.toHaveBeenCalled();
+  });
   it("logs rule passed if no rules and call type is created", async () => {
     await mockProcessTransaction(
       mockTransaction,
@@ -51,15 +91,21 @@ describe("runs rules for transaction", () => {
     );
     expect(logger.log.mock.calls[0][1]).toBe(mockTransaction.id);
   });
-  it("calls runMacros if no rules and call type is created", async () => {
+  it("calls runMacros with macros if no rules and call type is created", async () => {
     await mockProcessTransaction(
       mockTransaction,
-      [{ name: "rule1", filters: [], macros: [{ name: "macro1" }] }],
+      [
+        {
+          name: "rule1",
+          filters: [],
+          macros: [{ name: "macro1" }, { name: "macro2" }],
+        },
+      ],
       [{ func: "call", value: true }]
     );
     expect(runMacros).toHaveBeenCalled();
     expect(runMacros.mock.calls[0]).toEqual([
-      [{ name: "macro1" }],
+      [{ name: "macro1" }, { name: "macro2" }],
       mockTransaction,
     ]);
   });
@@ -74,37 +120,13 @@ describe("runs rules for transaction", () => {
       filters: [{ type: "direction", direction: "in" }],
       mocks: [{ func: "direction", value: true }],
       run: "does",
-      description: "direction filter passes",
+      description: "single non-call filter passes",
     },
     {
       filters: [{ type: "direction", direction: "in" }],
       mocks: [{ func: "direction", value: false }],
       run: "doesn't",
-      description: "direction filter fails",
-    },
-    {
-      filters: [{ type: "amount", test: "gte", value: 100 }],
-      mocks: [{ func: "amount", value: true }],
-      run: "does",
-      description: "amount filter passes",
-    },
-    {
-      filters: [{ type: "amount", test: "gte", value: 100 }],
-      mocks: [{ func: "amount", value: false }],
-      run: "doesn't",
-      description: "amount filter fails",
-    },
-    {
-      filters: [{ type: "text", field: "description", pattern: "pot" }],
-      mocks: [{ func: "text", value: true }],
-      run: "does",
-      description: "text filter passes",
-    },
-    {
-      filters: [{ type: "text", field: "description", pattern: "pot" }],
-      mocks: [{ func: "text", value: false }],
-      run: "doesn't",
-      description: "text filter fails",
+      description: "single non-call filter fails",
     },
     {
       filters: [
@@ -116,7 +138,7 @@ describe("runs rules for transaction", () => {
         { func: "amount", value: true },
       ],
       run: "does",
-      description: "text and amount filters pass",
+      description: "two filters pass",
     },
     {
       filters: [
@@ -128,7 +150,7 @@ describe("runs rules for transaction", () => {
         { func: "amount", value: true },
       ],
       run: "doesn't",
-      description: "text filter fails and amount filter passes",
+      description: "first filter fails and second passes",
     },
     {
       filters: [
@@ -140,7 +162,7 @@ describe("runs rules for transaction", () => {
         { func: "amount", value: false },
       ],
       run: "doesn't",
-      description: "text filter passes and amount filter fails",
+      description: "first filter passes and second fails",
     },
     {
       filters: [
@@ -152,21 +174,107 @@ describe("runs rules for transaction", () => {
         { func: "amount", value: false },
       ],
       run: "doesn't",
-      description: "text and amount filters fail",
+      description: "two filters fails",
     },
-  ])(
-    "$run run macros when $description",
-    async ({ filters, mocks, run, description }) => {
-      await mockProcessTransaction(
-        mockTransaction,
-        [{ name: "rule1", filters, macros: [{ name: "macro1" }] }],
-        mocks
-      );
-      if (run == "does") {
-        expect(runMacros).toHaveBeenCalled();
-      } else {
-        expect(runMacros).not.toHaveBeenCalled();
-      }
+    {
+      filters: [
+        { type: "direction", direction: "in" },
+        { type: "direction", direction: "out" },
+      ],
+      mocks: [
+        { func: "direction", value: false },
+        { func: "direction", value: true },
+      ],
+      run: "doesn't",
+      description: "two filters conflict",
+    },
+    {
+      filters: [{ type: "call", call: "updated" }],
+      mocks: [{ func: "call", value: false }],
+      run: "doesn't",
+      description: "custom call filter fails",
+    },
+    {
+      filters: [{ type: "call", call: "updated" }],
+      mocks: [{ func: "call", value: true }],
+      run: "does",
+      description: "custom call filter passes",
+    },
+  ])("$run run macros when $description", async ({ filters, mocks, run }) => {
+    await mockProcessTransaction(
+      mockTransaction,
+      [{ name: "rule1", filters, macros: [{ name: "macro1" }] }],
+      mocks
+    );
+    if (run == "does") {
+      expect(runMacros).toHaveBeenCalled();
+    } else {
+      expect(runMacros).not.toHaveBeenCalled();
     }
-  );
+  });
+  it("runs macros for passing rules only when only second rule passes", async () => {
+    await mockProcessTransaction(
+      mockTransaction,
+      [
+        {
+          name: "rule1",
+          filters: [{ type: "direction", direction: "in" }],
+          macros: [{ name: "macro1" }],
+        },
+        {
+          name: "rule2",
+          filters: [{ type: "amount", test: "gt", value: 200 }],
+          macros: [{ name: "macro2" }],
+        },
+      ],
+      [
+        { func: "direction", value: false },
+        { func: "amount", value: true },
+      ]
+    );
+    await Promise.resolve();
+    expect(runMacros).toHaveBeenCalled();
+    expect(runMacros.mock.calls[0][0]).toEqual([{ name: "macro2" }]);
+  });
+  it("runs macros for passing rules only when only second rule passes", async () => {
+    await mockProcessTransaction(
+      mockTransaction,
+      [
+        {
+          name: "rule1",
+          filters: [{ type: "direction", direction: "in" }],
+          macros: [{ name: "macro1" }],
+        },
+        {
+          name: "rule2",
+          filters: [{ type: "amount", test: "gt", value: 200 }],
+          macros: [{ name: "macro2" }],
+        },
+      ],
+      [
+        { func: "direction", value: true },
+        { func: "amount", value: false },
+      ]
+    );
+    await Promise.resolve();
+    expect(runMacros).toHaveBeenCalled();
+    expect(runMacros.mock.calls[0][0]).toEqual([{ name: "macro1" }]);
+  });
+  it("logs error with id for colour if filter function throws error", async () => {
+    evaluatingFunctions.direction.mockImplementation(() => {
+      throw new Error("Mock error message");
+    });
+    await mockProcessTransaction(mockTransaction, [
+      {
+        name: "rule1",
+        filters: [{ type: "direction", direction: "in" }],
+        macros: [{ name: "macro1" }],
+      },
+    ]);
+    expect(logger.log).toHaveBeenCalled();
+    expect(logger.log.mock.calls[0]).toEqual([
+      "Mock error message",
+      mockTransaction.id,
+    ]);
+  });
 });

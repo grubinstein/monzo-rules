@@ -12,10 +12,10 @@ const createProcessTransaction = ({
   const runRulesForTransaction = async (rules, transaction) => {
     for (const rule of rules) {
       const rulePassed = await runRuleForTransaction(rule, transaction).catch(
-        console.log
+        (e) => logger.log(e.message, transaction.id)
       );
       if (!rulePassed) {
-        return;
+        continue;
       }
       logRulePassedForTransaction(rule, transaction);
       await runMacros(rule.macros, transaction);
