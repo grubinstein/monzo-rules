@@ -216,120 +216,187 @@ describe("amount filter", () => {
     const result = amount(filter, transaction);
     expect(result).toBe(false);
   });
+});
 
-  describe("text filter", () => {
-    const { text } = evaluatingFunctions;
-    it("returns true for an exact match", () => {
-      const transaction = { ...mockTransaction, description: "this text" };
-      const filter = {
-        type: "text",
-        field: "description",
-        pattern: "this text",
-      };
-      const result = text(filter, transaction);
-      expect(result).toBe(true);
-    });
-    it("returns true when pattern begins field", () => {
-      const transaction = { ...mockTransaction, description: "this text" };
-      const filter = {
-        type: "text",
-        field: "description",
-        pattern: "this*",
-      };
-      const result = text(filter, transaction);
-      expect(result).toBe(true);
-    });
-    it("returns true when patten ends field", () => {
-      const transaction = { ...mockTransaction, description: "this text" };
-      const filter = {
-        type: "text",
-        field: "description",
-        pattern: "*text",
-      };
-      const result = text(filter, transaction);
-      expect(result).toBe(true);
-    });
-    it("allows wildcards to match empty strings", () => {
-      const transaction = { ...mockTransaction, description: "this text" };
-      const filter = {
-        type: "text",
-        field: "description",
-        pattern: "*this text*",
-      };
-      const result = text(filter, transaction);
-      expect(result).toBe(true);
-    });
-    it("supports wildcards mide string", () => {
-      const transaction = { ...mockTransaction, description: "this text" };
-      const filter = {
-        type: "text",
-        field: "description",
-        pattern: "thi*ext",
-      };
-      const result = text(filter, transaction);
-      expect(result).toBe(true);
-    });
-    it("returns false for incomplete pattern without wildcards", () => {
-      const transaction = { ...mockTransaction, description: "this text" };
-      const filter = {
-        type: "text",
-        field: "description",
-        pattern: "this",
-      };
-      const result = text(filter, transaction);
-      expect(result).toBe(false);
-    });
-    it("finds values using paths with .", () => {
-      const transaction = { ...mockTransaction };
-      transaction.metadata.external_id = "this text";
-      const filter = {
-        type: "text",
-        field: "metadata.external_id",
-        pattern: "*hi*xt",
-      };
-      const result = text(filter, transaction);
-      expect(result).toBe(true);
-    });
-    it("allows * to be escaped with \\ and passes when it should", () => {
-      const transaction = { ...mockTransaction, description: "this*text" };
-      const filter = {
-        type: "text",
-        field: "description",
-        pattern: `this\\\*text`,
-      };
-      const result = text(filter, transaction);
-      expect(result).toBe(true);
-    });
-    it("allows * to be escaped with \\ and fails when it should", () => {
-      const transaction = { ...mockTransaction, description: `this\\*text` };
-      const filter = {
-        type: "text",
-        field: "description",
-        pattern: `this\\\*text`,
-      };
-      const result = text(filter, transaction);
-      expect(result).toBe(false);
-    });
-    it("allows \\* to be escaped as \\\\*", () => {
-      const transaction = { ...mockTransaction, description: `this\\*text` };
-      const filter = {
-        type: "text",
-        field: "description",
-        pattern: `this\\\\\*text`,
-      };
-      const result = text(filter, transaction);
-      expect(result).toBe(true);
-    });
-    it("allows case insensitive matching", () => {
-      const transaction = { ...mockTransaction, description: "ThIs text" };
-      const filter = {
-        type: "text",
-        field: "description",
-        pattern: "tHi*Ext",
-        caseInsensitive: true,
-      };
-      const result = text(filter, transaction);
-      expect(result).toBe(true);
-    });
+describe("text filter", () => {
+  const { text } = evaluatingFunctions;
+  it("returns true for an exact match", () => {
+    const transaction = { ...mockTransaction, description: "this text" };
+    const filter = {
+      type: "text",
+      field: "description",
+      pattern: "this text",
+    };
+    const result = text(filter, transaction);
+    expect(result).toBe(true);
+  });
+  it("returns true when pattern begins field", () => {
+    const transaction = { ...mockTransaction, description: "this text" };
+    const filter = {
+      type: "text",
+      field: "description",
+      pattern: "this*",
+    };
+    const result = text(filter, transaction);
+    expect(result).toBe(true);
+  });
+  it("returns true when patten ends field", () => {
+    const transaction = { ...mockTransaction, description: "this text" };
+    const filter = {
+      type: "text",
+      field: "description",
+      pattern: "*text",
+    };
+    const result = text(filter, transaction);
+    expect(result).toBe(true);
+  });
+  it("allows wildcards to match empty strings", () => {
+    const transaction = { ...mockTransaction, description: "this text" };
+    const filter = {
+      type: "text",
+      field: "description",
+      pattern: "*this text*",
+    };
+    const result = text(filter, transaction);
+    expect(result).toBe(true);
+  });
+  it("supports wildcards mide string", () => {
+    const transaction = { ...mockTransaction, description: "this text" };
+    const filter = {
+      type: "text",
+      field: "description",
+      pattern: "thi*ext",
+    };
+    const result = text(filter, transaction);
+    expect(result).toBe(true);
+  });
+  it("returns false for incomplete pattern without wildcards", () => {
+    const transaction = { ...mockTransaction, description: "this text" };
+    const filter = {
+      type: "text",
+      field: "description",
+      pattern: "this",
+    };
+    const result = text(filter, transaction);
+    expect(result).toBe(false);
+  });
+  it("finds values using paths with .", () => {
+    const transaction = { ...mockTransaction };
+    transaction.metadata.external_id = "this text";
+    const filter = {
+      type: "text",
+      field: "metadata.external_id",
+      pattern: "*hi*xt",
+    };
+    const result = text(filter, transaction);
+    expect(result).toBe(true);
+  });
+  it("allows * to be escaped with \\ and passes when it should", () => {
+    const transaction = { ...mockTransaction, description: "this*text" };
+    const filter = {
+      type: "text",
+      field: "description",
+      pattern: `this\\\*text`,
+    };
+    const result = text(filter, transaction);
+    expect(result).toBe(true);
+  });
+  it("allows * to be escaped with \\ and fails when it should", () => {
+    const transaction = { ...mockTransaction, description: `this\\*text` };
+    const filter = {
+      type: "text",
+      field: "description",
+      pattern: `this\\\*text`,
+    };
+    const result = text(filter, transaction);
+    expect(result).toBe(false);
+  });
+  it("allows \\* to be escaped as \\\\*", () => {
+    const transaction = { ...mockTransaction, description: `this\\*text` };
+    const filter = {
+      type: "text",
+      field: "description",
+      pattern: `this\\\\\*text`,
+    };
+    const result = text(filter, transaction);
+    expect(result).toBe(true);
+  });
+  it("allows case insensitive matching", () => {
+    const transaction = { ...mockTransaction, description: "ThIs text" };
+    const filter = {
+      type: "text",
+      field: "description",
+      pattern: "tHi*Ext",
+      caseInsensitive: true,
+    };
+    const result = text(filter, transaction);
+    expect(result).toBe(true);
+  });
+});
+
+describe("call type filter", () => {
+  const { call } = evaluatingFunctions;
+  it("returns true when call = any and call type is created", () => {
+    const transaction = { ...mockTransaction, callType: "transaction.created" };
+    const filter = {
+      type: "call",
+      call: "any",
+    };
+    const result = call(filter, transaction);
+    expect(result).toBe(true);
+  });
+  it("returns true when call = any and call type is updated", () => {
+    const transaction = { ...mockTransaction, callType: "transaction.updated" };
+    const filter = {
+      type: "call",
+      call: "any",
+    };
+    const result = call(filter, transaction);
+    expect(result).toBe(true);
+  });
+  it("returns true when call = created and call type is created", () => {
+    const transaction = { ...mockTransaction, callType: "transaction.created" };
+    const filter = {
+      type: "call",
+      call: "created",
+    };
+    const result = call(filter, transaction);
+    expect(result).toBe(true);
+  });
+  it("returns false when call = created and call type is updated", () => {
+    const transaction = { ...mockTransaction, callType: "transaction.updated" };
+    const filter = {
+      type: "call",
+      call: "created",
+    };
+    const result = call(filter, transaction);
+    expect(result).toBe(false);
+  });
+  it("returns true when call = updated and call type is updated", () => {
+    const transaction = { ...mockTransaction, callType: "transaction.updated" };
+    const filter = {
+      type: "call",
+      call: "updated",
+    };
+    const result = call(filter, transaction);
+    expect(result).toBe(true);
+  });
+  it("returns false when call = updated and call type is created", () => {
+    const transaction = { ...mockTransaction, callType: "transaction.created" };
+    const filter = {
+      type: "call",
+      call: "updated",
+    };
+    const result = call(filter, transaction);
+    expect(result).toBe(false);
+  });
+  it("throws an error if call is something else", () => {
+    const transaction = { ...mockTransaction, callType: "transaction.created" };
+    const filter = {
+      type: "call",
+      call: "something",
+    };
+    const runFilter = () => call(filter, transaction);
+    expect(runFilter).toThrowError("Invalid call type");
   });
 });

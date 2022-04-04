@@ -49,6 +49,9 @@ const escapeWildcards = (pattern, value) => {
 
 const evaluateCallTypeFilter = (filter, transaction) => {
   const { call } = filter;
+  if (!["any", "created", "updated"].includes(call)) {
+    throw new Error("Invalid call type");
+  }
   if (call == "any") {
     return true;
   }
