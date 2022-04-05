@@ -15,9 +15,9 @@ const createRunMacros = ({ workers, logger }) => {
     }
     const tasks = [...macro.tasks];
     const variables = {
-      user: transaction.user,
-      transactionAmount: transaction.amount,
-      transactionId: transaction.id,
+      user: transaction ? transaction.user : undefined,
+      transactionAmount: transaction ? transaction.amount : undefined,
+      transactionId: transaction ? transaction.id : undefined,
       macroName: macro.name,
     };
     await performNextTask(variables, tasks);
@@ -30,7 +30,10 @@ const createRunMacros = ({ workers, logger }) => {
     if (tasks.length) {
       await performNextTask(newVariables, tasks);
     } else {
-      logger.log("Completed running tasks.", variables.transactionId);
+      logger.log(
+        `Completed running tasks for ${variables.macroName}.`,
+        variables.transactionId
+      );
     }
   };
 
