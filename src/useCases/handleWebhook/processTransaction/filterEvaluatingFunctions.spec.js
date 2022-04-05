@@ -5,418 +5,309 @@ import mockTransaction from "../../../../test/mockTransaction.js";
 jest.useFakeTimers();
 
 describe("direction filter", () => {
-  const { direction } = evaluatingFunctions;
+  const { direction: directionFilter } = evaluatingFunctions;
+  const runDirectionFilter = (amount, direction) => {
+    const transaction = { ...mockTransaction, amount };
+    const filter = { type: "direction", direction };
+    return directionFilter(filter, transaction);
+  };
   it("it returns true when amount is positive and direction is in", () => {
-    const transaction = { ...mockTransaction, amount: 100 };
-    const filter = { type: "direction", direction: "in" };
-    const result = direction(filter, transaction);
+    const result = runDirectionFilter(100, "in");
     expect(result).toBe(true);
   });
   it("it returns false when amount is negative and direction is in", () => {
-    const transaction = { ...mockTransaction, amount: -100 };
-    const filter = { type: "direction", direction: "in" };
-    const result = direction(filter, transaction);
+    const result = runDirectionFilter(-100, "in");
     expect(result).toBe(false);
   });
   it("it returns false when amount is 0 and direction is in", () => {
-    const transaction = { ...mockTransaction, amount: 0 };
-    const filter = { type: "direction", direction: "in" };
-    const result = direction(filter, transaction);
+    const result = runDirectionFilter(0, "in");
     expect(result).toBe(false);
   });
   it("it returns false when amount is positive and direction is out", () => {
-    const transaction = { ...mockTransaction, amount: 100 };
-    const filter = { type: "direction", direction: "out" };
-    const result = direction(filter, transaction);
+    const result = runDirectionFilter(100, "out");
     expect(result).toBe(false);
   });
   it("it returns true when amount is negative and direction is out", () => {
-    const transaction = { ...mockTransaction, amount: -100 };
-    const filter = { type: "direction", direction: "out" };
-    const result = direction(filter, transaction);
+    const result = runDirectionFilter(-100, "out");
     expect(result).toBe(true);
   });
   it("it returns false when amount is 0 and direction is out", () => {
-    const transaction = { ...mockTransaction, amount: 0 };
-    const filter = { type: "direction", direction: "out" };
-    const result = direction(filter, transaction);
+    const result = runDirectionFilter(0, "out");
     expect(result).toBe(false);
   });
 });
 
 describe("amount filter", () => {
-  const { amount } = evaluatingFunctions;
+  const { amount: amountFilter } = evaluatingFunctions;
+  const runAmountFilter = (amount, test, value) => {
+    const transaction = { ...mockTransaction, amount };
+    const filter = { type: "amount", test, value };
+    return amountFilter(filter, transaction);
+  };
   it("throws an error when filter value is negative", () => {
-    const transaction = { ...mockTransaction, amount: 25 };
-    const filter = { type: "amount", test: "gte", value: -50 };
-    const runWithNegativeFilterValue = () => amount(filter, transaction);
+    const runWithNegativeFilterValue = () => runAmountFilter(25, "gte", -50);
     expect(runWithNegativeFilterValue).toThrowError(
       "Filter value must be greater than or equal to 0"
     );
   });
   it("returns true for gte test with larger value", () => {
-    const transaction = { ...mockTransaction, amount: 100 };
-    const filter = { type: "amount", test: "gte", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(100, "gte", 50);
     expect(result).toBe(true);
   });
   it("returns true for gte test with larger negative value", () => {
-    const transaction = { ...mockTransaction, amount: -100 };
-    const filter = { type: "amount", test: "gte", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(-100, "gte", 50);
     expect(result).toBe(true);
   });
   it("returns true for gte test with equal value", () => {
-    const transaction = { ...mockTransaction, amount: 50 };
-    const filter = { type: "amount", test: "gte", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(50, "gte", 50);
     expect(result).toBe(true);
   });
   it("returns true for gte test with equal negative value", () => {
-    const transaction = { ...mockTransaction, amount: -50 };
-    const filter = { type: "amount", test: "gte", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(-50, "gte", 50);
     expect(result).toBe(true);
   });
   it("returns false for gte test with smaller value", () => {
-    const transaction = { ...mockTransaction, amount: 25 };
-    const filter = { type: "amount", test: "gte", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(25, "gte", 50);
     expect(result).toBe(false);
   });
   it("returns false for gte test with smaller negative value", () => {
-    const transaction = { ...mockTransaction, amount: 25 };
-    const filter = { type: "amount", test: "gte", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(25, "gte", 50);
     expect(result).toBe(false);
   });
   it("returns true for gt test with larger value", () => {
-    const transaction = { ...mockTransaction, amount: 100 };
-    const filter = { type: "amount", test: "gt", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(100, "gt", 50);
     expect(result).toBe(true);
   });
   it("returns true for gt test with larger negative value", () => {
-    const transaction = { ...mockTransaction, amount: -100 };
-    const filter = { type: "amount", test: "gt", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(-100, "gt", 50);
     expect(result).toBe(true);
   });
   it("returns false for gt test with equal value", () => {
-    const transaction = { ...mockTransaction, amount: 50 };
-    const filter = { type: "amount", test: "gt", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(50, "gt", 50);
     expect(result).toBe(false);
   });
   it("returns false for gt test with equal negative value", () => {
-    const transaction = { ...mockTransaction, amount: -50 };
-    const filter = { type: "amount", test: "gt", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(-50, "gt", 50);
     expect(result).toBe(false);
   });
   it("returns false for gt test with smaller value", () => {
-    const transaction = { ...mockTransaction, amount: 25 };
-    const filter = { type: "amount", test: "gt", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(25, "gt", 50);
     expect(result).toBe(false);
   });
   it("returns false for gt test with smaller negative value", () => {
-    const transaction = { ...mockTransaction, amount: 25 };
-    const filter = { type: "amount", test: "gt", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(-25, "gt", 50);
     expect(result).toBe(false);
   });
   it("returns false for lte test with larger value", () => {
-    const transaction = { ...mockTransaction, amount: 100 };
-    const filter = { type: "amount", test: "lte", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(100, "lte", 50);
     expect(result).toBe(false);
   });
   it("returns false for lte test with larger negative value", () => {
-    const transaction = { ...mockTransaction, amount: -100 };
-    const filter = { type: "amount", test: "lte", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(-100, "lte", 50);
     expect(result).toBe(false);
   });
   it("returns true for lte test with equal value", () => {
-    const transaction = { ...mockTransaction, amount: 50 };
-    const filter = { type: "amount", test: "lte", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(50, "lte", 50);
     expect(result).toBe(true);
   });
   it("returns true for lte test with equal negative value", () => {
-    const transaction = { ...mockTransaction, amount: -50 };
-    const filter = { type: "amount", test: "lte", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(-50, "lte", 50);
     expect(result).toBe(true);
   });
   it("returns true for lte test with smaller value", () => {
-    const transaction = { ...mockTransaction, amount: 25 };
-    const filter = { type: "amount", test: "lte", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(25, "lte", 50);
     expect(result).toBe(true);
   });
   it("returns true for lte test with smaller negative value", () => {
-    const transaction = { ...mockTransaction, amount: 25 };
-    const filter = { type: "amount", test: "lte", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(25, "lte", 50);
     expect(result).toBe(true);
   });
   it("returns false for lt test with larger value", () => {
-    const transaction = { ...mockTransaction, amount: 100 };
-    const filter = { type: "amount", test: "lt", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(100, "lt", 50);
     expect(result).toBe(false);
   });
   it("returns false for lt test with larger negative value", () => {
-    const transaction = { ...mockTransaction, amount: -100 };
-    const filter = { type: "amount", test: "lt", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(-100, "lt", 50);
     expect(result).toBe(false);
   });
   it("returns false for lt test with equal value", () => {
-    const transaction = { ...mockTransaction, amount: 50 };
-    const filter = { type: "amount", test: "lt", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(50, "lt", 50);
     expect(result).toBe(false);
   });
   it("returns false for lt test with equal negative value", () => {
-    const transaction = { ...mockTransaction, amount: -50 };
-    const filter = { type: "amount", test: "lt", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(-50, "lt", 50);
     expect(result).toBe(false);
   });
   it("returns true for lt test with smaller value", () => {
-    const transaction = { ...mockTransaction, amount: 25 };
-    const filter = { type: "amount", test: "lt", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(-25, "lt", 50);
     expect(result).toBe(true);
   });
   it("returns true for lt test with smaller negative value", () => {
-    const transaction = { ...mockTransaction, amount: 25 };
-    const filter = { type: "amount", test: "lt", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(25, "lt", 50);
     expect(result).toBe(true);
   });
   it("returns true for equal test with equal value", () => {
-    const transaction = { ...mockTransaction, amount: 50 };
-    const filter = { type: "amount", test: "equal", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(50, "equal", 50);
     expect(result).toBe(true);
   });
   it("returns true for equal test with negative equal value", () => {
-    const transaction = { ...mockTransaction, amount: -50 };
-    const filter = { type: "amount", test: "equal", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(-50, "equal", 50);
     expect(result).toBe(true);
   });
   it("returns false for equal test with unequal value", () => {
-    const transaction = { ...mockTransaction, amount: 49 };
-    const filter = { type: "amount", test: "equal", value: 50 };
-    const result = amount(filter, transaction);
+    const result = runAmountFilter(49, "equal", 50);
     expect(result).toBe(false);
   });
 });
 
 describe("text filter", () => {
   const { text } = evaluatingFunctions;
+  const runAmountFilter = (
+    mockTransactionEdits,
+    field,
+    pattern,
+    caseInsensitive
+  ) => {
+    const transaction = { ...mockTransaction, ...mockTransactionEdits };
+    const filter = { type: "text", field, pattern, caseInsensitive };
+    return text(filter, transaction);
+  };
   it("returns true for an exact match", () => {
-    const transaction = { ...mockTransaction, description: "this text" };
-    const filter = {
-      type: "text",
-      field: "description",
-      pattern: "this text",
-    };
-    const result = text(filter, transaction);
+    const result = runAmountFilter(
+      { description: "this text" },
+      "description",
+      "this text"
+    );
     expect(result).toBe(true);
   });
   it("returns true when pattern begins field", () => {
-    const transaction = { ...mockTransaction, description: "this text" };
-    const filter = {
-      type: "text",
-      field: "description",
-      pattern: "this*",
-    };
-    const result = text(filter, transaction);
+    const result = runAmountFilter(
+      { description: "this text" },
+      "description",
+      "this*"
+    );
     expect(result).toBe(true);
   });
   it("returns true when patten ends field", () => {
-    const transaction = { ...mockTransaction, description: "this text" };
-    const filter = {
-      type: "text",
-      field: "description",
-      pattern: "*text",
-    };
-    const result = text(filter, transaction);
+    const result = runAmountFilter(
+      { description: "this text" },
+      "description",
+      "*text"
+    );
     expect(result).toBe(true);
   });
   it("allows wildcards to match empty strings", () => {
-    const transaction = { ...mockTransaction, description: "this text" };
-    const filter = {
-      type: "text",
-      field: "description",
-      pattern: "*this text*",
-    };
-    const result = text(filter, transaction);
+    const result = runAmountFilter(
+      { description: "this text" },
+      "description",
+      "*this text*"
+    );
     expect(result).toBe(true);
   });
   it("supports wildcards mide string", () => {
-    const transaction = { ...mockTransaction, description: "this text" };
-    const filter = {
-      type: "text",
-      field: "description",
-      pattern: "thi*ext",
-    };
-    const result = text(filter, transaction);
+    const result = runAmountFilter(
+      { description: "this text" },
+      "description",
+      "thi*ext"
+    );
     expect(result).toBe(true);
   });
   it("returns false for incomplete pattern without wildcards", () => {
-    const transaction = { ...mockTransaction, description: "this text" };
-    const filter = {
-      type: "text",
-      field: "description",
-      pattern: "this",
-    };
-    const result = text(filter, transaction);
+    const result = runAmountFilter(
+      { description: "this text" },
+      "description",
+      "this"
+    );
     expect(result).toBe(false);
   });
   it("finds values using paths with .", () => {
-    const transaction = { ...mockTransaction };
-    transaction.metadata.external_id = "this text";
-    const filter = {
-      type: "text",
-      field: "metadata.external_id",
-      pattern: "*hi*xt",
-    };
-    const result = text(filter, transaction);
+    const result = runAmountFilter(
+      { metadata: { external_id: "this text" } },
+      "metadata.external_id",
+      "*hi*xt"
+    );
     expect(result).toBe(true);
   });
   it("allows * to be escaped with \\ and passes when it should", () => {
-    const transaction = { ...mockTransaction, description: "this*text" };
-    const filter = {
-      type: "text",
-      field: "description",
-      pattern: `this\\\*text`,
-    };
-    const result = text(filter, transaction);
+    const result = runAmountFilter(
+      { description: "this*text" },
+      "description",
+      `this\\\*text`
+    );
     expect(result).toBe(true);
   });
   it("allows * to be escaped with \\ and fails when it should", () => {
-    const transaction = { ...mockTransaction, description: `this\\ksjtext` };
-    const filter = {
-      type: "text",
-      field: "description",
-      pattern: `this\\\*text`,
-    };
-    const result = text(filter, transaction);
+    const result = runAmountFilter(
+      { description: `this\\ksjtext` },
+      "description",
+      `this\\\*text`
+    );
     expect(result).toBe(false);
   });
   it("allows \\* to be escaped as \\\\*", () => {
-    const transaction = { ...mockTransaction, description: `this\\*text` };
-    const filter = {
-      type: "text",
-      field: "description",
-      pattern: `this\\\\*text`,
-    };
-    const result = text(filter, transaction);
+    const result = runAmountFilter(
+      { description: `this\\*text` },
+      "description",
+      `this\\\\*text`
+    );
     expect(result).toBe(true);
   });
   it("allows case insensitive matching", () => {
-    const transaction = { ...mockTransaction, description: "ThIs text" };
-    const filter = {
-      type: "text",
-      field: "description",
-      pattern: "tHi*Ext",
-      caseInsensitive: true,
-    };
-    const result = text(filter, transaction);
+    const result = runAmountFilter(
+      { description: "ThIs text" },
+      "description",
+      "tHi*Ext",
+      true
+    );
     expect(result).toBe(true);
   });
   it("returns false if top level field path does not resolve", () => {
-    const transaction = { ...mockTransaction };
-    const filter = {
-      type: "text",
-      field: "non-existentField",
-      pattern: "some text",
-    };
-    const result = text(filter, transaction);
+    const result = runAmountFilter({}, "non-existentField", "some text");
     expect(result).toBe(false);
   });
   it("returns false if top level field path does not resolve", () => {
-    const transaction = { ...mockTransaction };
-    const filter = {
-      type: "text",
-      field: "non.existentField",
-      pattern: "some text",
-    };
-    const result = text(filter, transaction);
+    const result = runAmountFilter({}, "non.existentField", "some text");
     expect(result).toBe(false);
   });
 });
 
 describe("call type filter", () => {
   const { call } = evaluatingFunctions;
-  it("returns true when call = any and call type is created", () => {
-    const transaction = { ...mockTransaction, callType: "transaction.created" };
+  const callFilter = call;
+  const runCallFilter = (callType, callFilterValue) => {
+    const transaction = { ...mockTransaction, callType };
     const filter = {
       type: "call",
-      call: "any",
+      call: callFilterValue,
     };
-    const result = call(filter, transaction);
+    return callFilter(filter, transaction);
+  };
+  it("returns true when call = any and call type is created", () => {
+    const result = runCallFilter("transaction.created", "any");
     expect(result).toBe(true);
   });
   it("returns true when call = any and call type is updated", () => {
-    const transaction = { ...mockTransaction, callType: "transaction.updated" };
-    const filter = {
-      type: "call",
-      call: "any",
-    };
-    const result = call(filter, transaction);
+    const result = runCallFilter("transaction.updated", "any");
     expect(result).toBe(true);
   });
   it("returns true when call = created and call type is created", () => {
-    const transaction = { ...mockTransaction, callType: "transaction.created" };
-    const filter = {
-      type: "call",
-      call: "created",
-    };
-    const result = call(filter, transaction);
+    const result = runCallFilter("transaction.created", "created");
     expect(result).toBe(true);
   });
   it("returns false when call = created and call type is updated", () => {
-    const transaction = { ...mockTransaction, callType: "transaction.updated" };
-    const filter = {
-      type: "call",
-      call: "created",
-    };
-    const result = call(filter, transaction);
+    const result = runCallFilter("transaction.updated", "created");
     expect(result).toBe(false);
   });
   it("returns true when call = updated and call type is updated", () => {
-    const transaction = { ...mockTransaction, callType: "transaction.updated" };
-    const filter = {
-      type: "call",
-      call: "updated",
-    };
-    const result = call(filter, transaction);
+    const result = runCallFilter("transaction.updated", "updated");
     expect(result).toBe(true);
   });
   it("returns false when call = updated and call type is created", () => {
-    const transaction = { ...mockTransaction, callType: "transaction.created" };
-    const filter = {
-      type: "call",
-      call: "updated",
-    };
-    const result = call(filter, transaction);
+    const result = runCallFilter("transaction.created", "updated");
     expect(result).toBe(false);
   });
   it("throws an error if call is something else", () => {
-    const transaction = { ...mockTransaction, callType: "transaction.created" };
-    const filter = {
-      type: "call",
-      call: "something",
-    };
-    const runFilter = () => call(filter, transaction);
+    const runFilter = () => runCallFilter("transaction.created", "something");
     expect(runFilter).toThrowError("Invalid call type");
   });
 });
