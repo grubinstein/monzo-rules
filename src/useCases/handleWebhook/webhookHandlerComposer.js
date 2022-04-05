@@ -9,7 +9,7 @@ import * as logger from "../../logging/colourLogger.js";
 
 const workers = createWorkers(monzo);
 
-const runMacros = createRunMacros(workers, logger);
+const runMacros = createRunMacros({ workers, logger });
 
 const processTransactionDepencies = {
   evaluatingFunctions,

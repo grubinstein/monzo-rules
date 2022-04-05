@@ -1,4 +1,4 @@
-const createRunMacros = (workers, logger) => {
+const createRunMacros = ({ workers, logger }) => {
   const runMacros = async (macros, transaction) => {
     if (!macros || !macros.length) {
       return;

@@ -41,7 +41,7 @@ const createMockWebhookService = ({
 
   const workers = mockWorkers || createWorkers(monzoClient);
 
-  const runMacros = mockRunMacros || createRunMacros(workers);
+  const runMacros = mockRunMacros || createRunMacros({ workers, logger });
 
   const processTransactionDepencies = {
     evaluatingFunctions: mockEvaluatingFunctions || defaultEvaluatingFunctions,
