@@ -162,7 +162,7 @@ describe("amount filter", () => {
 
 describe("text filter", () => {
   const { text } = evaluatingFunctions;
-  const runAmountFilter = (
+  const runTextFilter = (
     mockTransactionEdits,
     field,
     pattern,
@@ -173,7 +173,7 @@ describe("text filter", () => {
     return text(filter, transaction);
   };
   it("returns true for an exact match", () => {
-    const result = runAmountFilter(
+    const result = runTextFilter(
       { description: "this text" },
       "description",
       "this text"
@@ -181,7 +181,7 @@ describe("text filter", () => {
     expect(result).toBe(true);
   });
   it("returns true when pattern begins field", () => {
-    const result = runAmountFilter(
+    const result = runTextFilter(
       { description: "this text" },
       "description",
       "this*"
@@ -189,7 +189,7 @@ describe("text filter", () => {
     expect(result).toBe(true);
   });
   it("returns true when patten ends field", () => {
-    const result = runAmountFilter(
+    const result = runTextFilter(
       { description: "this text" },
       "description",
       "*text"
@@ -197,7 +197,7 @@ describe("text filter", () => {
     expect(result).toBe(true);
   });
   it("allows wildcards to match empty strings", () => {
-    const result = runAmountFilter(
+    const result = runTextFilter(
       { description: "this text" },
       "description",
       "*this text*"
@@ -205,7 +205,7 @@ describe("text filter", () => {
     expect(result).toBe(true);
   });
   it("supports wildcards mide string", () => {
-    const result = runAmountFilter(
+    const result = runTextFilter(
       { description: "this text" },
       "description",
       "thi*ext"
@@ -213,7 +213,7 @@ describe("text filter", () => {
     expect(result).toBe(true);
   });
   it("returns false for incomplete pattern without wildcards", () => {
-    const result = runAmountFilter(
+    const result = runTextFilter(
       { description: "this text" },
       "description",
       "this"
@@ -221,7 +221,7 @@ describe("text filter", () => {
     expect(result).toBe(false);
   });
   it("finds values using paths with .", () => {
-    const result = runAmountFilter(
+    const result = runTextFilter(
       { metadata: { external_id: "this text" } },
       "metadata.external_id",
       "*hi*xt"
@@ -229,31 +229,66 @@ describe("text filter", () => {
     expect(result).toBe(true);
   });
   it("allows * to be escaped with \\ and passes when it should", () => {
-    const result = runAmountFilter(
+    // Reads: allows * to be escaped with \
+    const result = runTextFilter(
       { description: "this*text" },
       "description",
       `this\\\*text`
     );
+    // Description: "this*text"
+    // Pattern: "this\*text"
     expect(result).toBe(true);
   });
   it("allows * to be escaped with \\ and fails when it should", () => {
-    const result = runAmountFilter(
+    // Reads: allows * to be escaped with \
+    const result = runTextFilter(
       { description: `this\\ksjtext` },
       "description",
       `this\\\*text`
     );
+    // Description: "this\ksjtext"
+    // Pattern: "this\*text"
     expect(result).toBe(false);
   });
-  it("allows \\* to be escaped as \\\\*", () => {
-    const result = runAmountFilter(
-      { description: `this\\*text` },
+  it("allows \\* to be escaped as \\\\* and matches \\ followed by anything", () => {
+    // Reads: allows \* to be escaped as \\* and matches \ followed by anything
+    const result = runTextFilter(
+      { description: `this\\text` },
       "description",
-      `this\\\\*text`
+      `this\\\\*t`
     );
+    // Description: "this\text"
+    // Pattern: "this\\*"
+    expect(result).toBe(true);
+  });
+  it("allows a mix of \\* and \\\\*", () => {
+    // Reads: allows a mix of \* and \\* in pattern
+    // \* should match *
+    // \\* should match \ followed by anything
+    const result = runTextFilter(
+      {
+        description: `this is an asterix * and this \\ is a backslash`,
+      },
+      "description",
+      `this is an asterix \\\* and this \\\\* backslash`
+    );
+    // Description: "this is an asterix * and this \ is a backslash"
+    // Pattern: "this is an asterix \* and this \\* backslash"
+    expect(result).toBe(true);
+  });
+  it("treats \\\\ alone as normal, does not escape to \\", () => {
+    // Reads: treats \\ alone as normal
+    const result = runTextFilter(
+      { description: `this \\\\ is two backslahes` },
+      "description",
+      `this \\\\ is two backslahes`
+    );
+    // Description: "this \\ is two backslashes"
+    // Pattern: "this \\ is two backslashes"
     expect(result).toBe(true);
   });
   it("allows case insensitive matching", () => {
-    const result = runAmountFilter(
+    const result = runTextFilter(
       { description: "ThIs text" },
       "description",
       "tHi*Ext",
@@ -262,11 +297,11 @@ describe("text filter", () => {
     expect(result).toBe(true);
   });
   it("returns false if top level field path does not resolve", () => {
-    const result = runAmountFilter({}, "non-existentField", "some text");
+    const result = runTextFilter({}, "non-existentField", "some text");
     expect(result).toBe(false);
   });
   it("returns false if top level field path does not resolve", () => {
-    const result = runAmountFilter({}, "non.existentField", "some text");
+    const result = runTextFilter({}, "non.existentField", "some text");
     expect(result).toBe(false);
   });
 });

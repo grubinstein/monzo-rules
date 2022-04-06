@@ -44,11 +44,13 @@ const evaluateTextFilter = (filter, transaction) => {
 const escapeWildcards = (pattern, value) => {
   const hasEscapedBackslashBeforeWildcard = /\\\\\*/.test(pattern);
   const hasEscapedWildcard = /\\\*/.test(pattern);
+  //if (hasEscapedBackslashBeforeWildcard) {
+  if (hasEscapedWildcard) {
+    pattern = pattern.replace(/\\\*/g, "¬"); //   replace \* with ¬
+    value = value.replace(/\*/g, "¬"); //         replace * with ¬
+  }
   if (hasEscapedBackslashBeforeWildcard) {
-    pattern = pattern.replace(/\\\\\*/g, `\\*`); //   replace \\ with \
-  } else if (hasEscapedWildcard) {
-    pattern = pattern.replace(/\\\*/g, "¬"); //       replace \* with ¬
-    value = value.replace(/\*/g, "¬"); //             replace * with ¬
+    pattern = pattern.replace(/\\¬/g, `\\*`); //  replace \¬ with \\*
   }
   return { pattern, value };
 };
