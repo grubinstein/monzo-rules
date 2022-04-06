@@ -128,11 +128,13 @@ const createMonzoApiAdapter = async ({
     user,
     title,
     body,
+    url,
     image_url = "https://www.animatedimages.org/data/media/198/animated-frog-image-0015.gif"
   ) => {
     const params = {
       account_id: user.accountId,
       type: "basic",
+      url,
       params: {
         title,
         body,
