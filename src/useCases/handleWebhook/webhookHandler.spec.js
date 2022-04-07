@@ -6,7 +6,6 @@ const processTransaction = jest.fn();
 const logger = { log: jest.fn() };
 const db = {
   addRequestIfNew: jest.fn(),
-  getUserByAccountId: jest.fn(),
 };
 
 const webhookHandler = webhookComposer({
@@ -86,13 +85,6 @@ describe("webhook handler", () => {
     expect(Object.keys(processTransaction.mock.calls[0][0])).toEqual(
       expect.arrayContaining(Object.keys(mockWebhookRequest.body.data))
     );
-  });
-  it("adds user to transaction before passing to processTransaction", async () => {
-    db.addRequestIfNew.mockReturnValue(true);
-    const mockUser = { id: 1, email: "user@mail.com" };
-    db.getUserByAccountId.mockReturnValue(mockUser);
-    await webhookHandler(mockWebhookRequest, res);
-    expect(processTransaction.mock.calls[0][0].user).toEqual(mockUser);
   });
   it("returns 200", async () => {
     await webhookHandler(mockWebhookRequest, res);

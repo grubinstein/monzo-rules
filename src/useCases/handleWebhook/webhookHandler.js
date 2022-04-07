@@ -4,11 +4,6 @@ const createWebhookHandler = ({ processTransaction, db, logger }) => {
     return created;
   };
 
-  const handleTransaction = async (transaction) => {
-    transaction.user = await db.getUserByAccountId(transaction.account_id);
-    await processTransaction(transaction);
-  };
-
   const getTransactionWithType = (req) => {
     const transaction = req.body.data;
     transaction.callType = req.body.type;
@@ -28,7 +23,7 @@ const createWebhookHandler = ({ processTransaction, db, logger }) => {
     const newRequest = await storeRequest(transaction);
     logRequest(newRequest, transaction);
     if (newRequest) {
-      await handleTransaction(transaction);
+      await processTransaction(transaction);
     }
     res.status(200).send();
   };
