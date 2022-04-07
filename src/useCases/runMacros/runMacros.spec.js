@@ -54,17 +54,19 @@ describe("run macros", () => {
   });
   it("passes variables to balanceWorker", async () => {
     await testRunMacros(["balance"]);
-    const args = workers.balance.mock.calls[0];
-    expect(Object.keys(args[0])).toEqual([
+    const variables = workers.balance.mock.calls[0][0];
+    expect(Object.keys(variables)).toEqual([
       "user",
       "transactionAmount",
       "transactionId",
       "macroName",
+      "userVariables",
     ]);
-    expect(args[0].user).toBe(mockUser);
-    expect(args[0].transactionAmount).toBe(mockTransaction.amount);
-    expect(args[0].transactionId).toBe(mockTransaction.id);
-    expect(args[0].macroName).toBe("macro1");
+    expect(variables.user).toBe(mockUser);
+    expect(variables.transactionAmount).toBe(mockTransaction.amount);
+    expect(variables.transactionId).toBe(mockTransaction.id);
+    expect(variables.macroName).toBe("macro1");
+    expect(variables.userVariables).toEqual({});
   });
   it("passes task to balanceWorker", async () => {
     await testRunMacros(["balance"]);

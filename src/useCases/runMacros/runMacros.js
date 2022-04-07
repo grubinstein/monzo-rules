@@ -19,6 +19,7 @@ const createRunMacros = ({ workers, logger }) => {
       transactionAmount: transaction ? transaction.amount : undefined,
       transactionId: transaction ? transaction.id : undefined,
       macroName: macro.name,
+      userVariables: {},
     };
     await performNextTask(variables, tasks);
   };
