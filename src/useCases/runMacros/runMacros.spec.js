@@ -57,7 +57,6 @@ describe("run macros", () => {
     const args = workers.balance.mock.calls[0];
     expect(Object.keys(args[0])).toEqual([
       "user",
-      "accountId",
       "transactionAmount",
       "transactionId",
       "macroName",
@@ -65,7 +64,6 @@ describe("run macros", () => {
     expect(args[0].user).toBe(mockUser);
     expect(args[0].transactionAmount).toBe(mockTransaction.amount);
     expect(args[0].transactionId).toBe(mockTransaction.id);
-    expect(args[0].accountId).toBe("acc_00009nnnePeCZC5bqBeu5x");
     expect(args[0].macroName).toBe("macro1");
   });
   it("passes task to balanceWorker", async () => {

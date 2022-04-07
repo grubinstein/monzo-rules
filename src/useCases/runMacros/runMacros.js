@@ -16,7 +16,6 @@ const createRunMacros = ({ workers, logger }) => {
     const tasks = [...macro.tasks];
     const variables = {
       user,
-      accountId: transaction ? transaction.account_id : undefined,
       transactionAmount: transaction ? transaction.amount : undefined,
       transactionId: transaction ? transaction.id : undefined,
       macroName: macro.name,
