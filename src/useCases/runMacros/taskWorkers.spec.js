@@ -11,8 +11,10 @@ const monzo = {
 
 const workers = createWorkers(monzo);
 
+const mockUser = { accessToken: "abc123", refreshToken: "123abc" };
+
 const mockVariables = {
-  accountId: "abc123",
+  user: mockUser,
   transactionAmount: mockTransaction.amount,
   transactionId: mockTransaction.id,
   macroName: "macro1",
@@ -28,7 +30,7 @@ describe("balance worker", () => {
     pot = "Savings",
     variable = "balVar",
     variableDelta,
-    testError
+    testError = false
   ) => {
     const variables = { ...mockVariables, ...variableDelta };
     const task = { pot, variable };
@@ -50,12 +52,9 @@ describe("balance worker", () => {
     await runBalanceTask();
     expect(monzo.getPotBalance).toHaveBeenCalled();
   });
-  it("it calls getPotBalance with accountId from variables and pot name", async () => {
+  it("it calls getPotBalance with user from variables and pot name", async () => {
     await runBalanceTask();
-    expect(monzo.getPotBalance.mock.calls[0]).toEqual([
-      mockVariables.accountId,
-      "Savings",
-    ]);
+    expect(monzo.getPotBalance.mock.calls[0]).toEqual([mockUser, "Savings"]);
   });
   it("adds balance to variables as specified property", async () => {
     monzo.getPotBalance.mockImplementation(() => {
@@ -76,18 +75,16 @@ describe("balance worker", () => {
       "Balance task missing variable."
     );
   });
-  it("throws error if no accountId provided in variables", async () => {
+  it("throws error if no user provided in variables", async () => {
     const runWithoutUser = () =>
-      runBalanceTaskWithErrors("Savings", "balVar", { accountId: undefined });
-    await expect(runWithoutUser).rejects.toThrow(
-      "Balance task missing user account ID."
-    );
+      runBalanceTaskWithErrors("Savings", "balVar", { user: undefined });
+    await expect(runWithoutUser).rejects.toThrow("Balance task missing user.");
   });
   it("throws error if two variables missing", async () => {
     const runWithoutUser = () =>
-      runBalanceTaskWithErrors("", "balVar", { accountId: undefined });
+      runBalanceTaskWithErrors("", "balVar", { user: undefined });
     await expect(runWithoutUser).rejects.toThrow(
-      "Balance task missing pot and user account ID."
+      "Balance task missing pot and user."
     );
   });
   it("doesn't throw error if no transaction details passed", async () => {
@@ -128,10 +125,10 @@ describe("deposit worker", () => {
     await runDepositTask();
     expect(monzo.deposit).toHaveBeenCalled();
   });
-  it("calls monzo.deposit with accountId, pot, and amount", async () => {
+  it("calls monzo.deposit with user, pot, and amount", async () => {
     await runDepositTask();
     expect(monzo.deposit.mock.calls[0]).toEqual(
-      expect.arrayContaining([mockVariables.accountId, "Savings", 150])
+      expect.arrayContaining([mockUser, "Savings", 150])
     );
   });
   it("provides dedupe_id to monzo.deposit", async () => {
@@ -168,12 +165,10 @@ describe("deposit worker", () => {
       "Deposit task missing amount."
     );
   });
-  it("throws error if no accountId provided in variables", async () => {
+  it("throws error if no user provided in variables", async () => {
     const runWithoutUser = () =>
-      runDepositTaskWithErrors("Savings", 150, { accountId: undefined });
-    await expect(runWithoutUser).rejects.toThrow(
-      "Deposit task missing user account ID."
-    );
+      runDepositTaskWithErrors("Savings", 150, { user: undefined });
+    await expect(runWithoutUser).rejects.toThrow("Deposit task missing user.");
   });
   it("doesn't throw error if no transaction details passed", async () => {
     const variableDelta = {
@@ -224,10 +219,10 @@ describe("withdraw worker", () => {
     await runWithdrawTask();
     expect(monzo.withdraw).toHaveBeenCalled();
   });
-  it("calls monzo.withdraw with accountId, pot, and amount", async () => {
+  it("calls monzo.withdraw with user, pot, and amount", async () => {
     await runWithdrawTask();
     expect(monzo.withdraw.mock.calls[0]).toEqual(
-      expect.arrayContaining([mockVariables.accountId, "Savings", 150])
+      expect.arrayContaining([mockUser, "Savings", 150])
     );
   });
   it("provides dedupe_id to monzo.withdraw", async () => {
@@ -264,12 +259,10 @@ describe("withdraw worker", () => {
       "Withdraw task missing amount."
     );
   });
-  it("throws error if no accountId provided in variables", async () => {
+  it("throws error if no user provided in variables", async () => {
     const runWithoutUser = () =>
-      runWithdrawTaskWithErrors("Savings", 150, { accountId: undefined });
-    await expect(runWithoutUser).rejects.toThrow(
-      "Withdraw task missing user account ID."
-    );
+      runWithdrawTaskWithErrors("Savings", 150, { user: undefined });
+    await expect(runWithoutUser).rejects.toThrow("Withdraw task missing user.");
   });
   it("doesn't throw error if no transaction details passed", async () => {
     const variableDelta = {
@@ -322,11 +315,11 @@ describe("Notify worker", () => {
     await runNotifyTask();
     expect(monzo.notify).toHaveBeenCalled();
   });
-  it("calls monzo.withdraw with accountId, title, body, url, image_url", async () => {
+  it("calls monzo.withdraw with user, title, body, url, image_url", async () => {
     await runNotifyTask();
     expect(monzo.notify.mock.calls[0]).toEqual(
       expect.arrayContaining([
-        mockVariables.accountId,
+        mockUser,
         "Test title",
         "Test body",
         "www.test.com",
@@ -338,14 +331,12 @@ describe("Notify worker", () => {
     const runWithoutTitle = () => runNotifyTaskWithErrors("");
     await expect(runWithoutTitle).rejects.toThrow("Notify task missing title.");
   });
-  it("throws error if no accountId is passed", async () => {
+  it("throws error if no user is passed", async () => {
     const runWithoutUser = () =>
       runNotifyTaskWithErrors(undefined, undefined, undefined, undefined, {
-        accountId: undefined,
+        user: undefined,
       });
-    await expect(runWithoutUser).rejects.toThrow(
-      "Notify task missing user account ID."
-    );
+    await expect(runWithoutUser).rejects.toThrow("Notify task missing user.");
   });
   it("resolves title words beginning with # to values from variables", async () => {
     await runNotifyTask(

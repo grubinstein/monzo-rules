@@ -1,25 +1,25 @@
 const createWorkers = (monzo) => {
   const balanceWorker = async (variables, task) => {
     const { pot, variable } = task;
-    const { accountId } = variables;
+    const { user } = variables;
     throwErrorForMissingVars(
       "Balance",
-      [pot, variable, accountId],
-      ["pot", "variable", "user account ID"]
+      [pot, variable, user],
+      ["pot", "variable", "user"]
     );
-    const balance = await monzo.getPotBalance(accountId, pot);
+    const balance = await monzo.getPotBalance(user, pot);
     variables[variable] = balance;
     return variables;
   };
 
   const withdrawOrDeposit = async (variables, task) => {
     const { pot, amount, type } = task;
-    const { accountId, transactionId, triggerId, macroName } = variables;
+    const { user, transactionId, triggerId, macroName } = variables;
     const taskName = type.charAt(0).toUpperCase() + type.substring(1);
     throwErrorForMissingVars(
       taskName,
-      [pot, amount, accountId, macroName],
-      ["pot", "amount", "user account ID", "macro name"]
+      [pot, amount, user, macroName],
+      ["pot", "amount", "user", "macro name"]
     );
     const amountValue = isNaN(amount) ? variables[amount] : amount;
     if (!amountValue) {
@@ -29,7 +29,7 @@ const createWorkers = (monzo) => {
       amountValue > 0 && type == "deposit" ? "deposit" : "withdraw";
     const positiveRoundedAmount = Math.ceil(Math.abs(amountValue));
     await monzo[monzoFunctionName](
-      accountId,
+      user,
       pot,
       positiveRoundedAmount,
       (transactionId || triggerId) + macroName
@@ -39,15 +39,11 @@ const createWorkers = (monzo) => {
 
   const notifyWorker = async (variables, task) => {
     const { title, body, url, imageUrl } = task;
-    const { accountId } = variables;
-    throwErrorForMissingVars(
-      "Notify",
-      [title, accountId],
-      ["title", "user account ID"]
-    );
+    const { user } = variables;
+    throwErrorForMissingVars("Notify", [title, user], ["title", "user"]);
     const resolvedTitle = resolveVariablesAndFormatCurrency(variables, title);
     const resolvedBody = resolveVariablesAndFormatCurrency(variables, body);
-    await monzo.notify(accountId, resolvedTitle, resolvedBody, url, imageUrl);
+    await monzo.notify(user, resolvedTitle, resolvedBody, url, imageUrl);
     return variables;
   };
 
