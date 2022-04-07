@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
-import mockWebhookComposer from "../../../../test/mockWebhookComposer.js";
-import mockTransaction from "../../../../test/mockTransaction.js";
+import mockWebhookComposer from "../../../test/mockWebhookComposer.js";
+import mockTransaction from "../../../test/mockTransaction.js";
 import { text } from "express";
 
 jest.useFakeTimers();

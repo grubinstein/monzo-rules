@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
 import createRunMacros from "./runMacros.js";
-import mockTransaction from "../../../../../test/mockTransaction.js";
+import mockTransaction from "../../../test/mockTransaction.js";
 
 mockTransaction.user = { id: 5 };
 

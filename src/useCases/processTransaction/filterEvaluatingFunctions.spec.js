@@ -1,6 +1,6 @@
 import { jest } from "@jest/globals";
 import evaluatingFunctions from "./filterEvaluatingFunctions.js";
-import mockTransaction from "../../../../test/mockTransaction.js";
+import mockTransaction from "../../../test/mockTransaction.js";
 
 jest.useFakeTimers();
 

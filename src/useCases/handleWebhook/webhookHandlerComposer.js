@@ -1,9 +1,9 @@
 import createWebhookHandler from "./webhookHandler.js";
-import createProcessTransaction from "./processTransaction/processTransaction.js";
-import createRunMacros from "./processTransaction/runMacros/runMacros.js";
-import createWorkers from "./processTransaction/runMacros/taskWorkers.js";
+import createProcessTransaction from "../processTransaction/processTransaction.js";
+import createRunMacros from "../runMacros/runMacros.js";
+import createWorkers from "../runMacros/taskWorkers.js";
 import monzo from "../../monzo/monzoApiAdapterComposer.js";
-import evaluatingFunctions from "./processTransaction/filterEvaluatingFunctions.js";
+import evaluatingFunctions from "../processTransaction/filterEvaluatingFunctions.js";
 import * as db from "../../db/dbAdapter.js";
 import * as logger from "../../logging/colourLogger.js";
 
