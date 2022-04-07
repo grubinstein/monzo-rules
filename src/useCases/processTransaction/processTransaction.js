@@ -5,11 +5,12 @@ const createProcessTransaction = ({
   logger,
 }) => {
   const processTransaction = async (transaction) => {
+    const user = await db.getUserByAccountId(transaction.account_id);
     const rules = await db.getAllRules();
-    runRulesForTransaction(rules, transaction);
+    runRulesForTransaction(rules, transaction, user);
   };
 
-  const runRulesForTransaction = async (rules, transaction) => {
+  const runRulesForTransaction = async (rules, transaction, user) => {
     for (const rule of rules) {
       const rulePassed = await runRuleForTransaction(rule, transaction).catch(
         (e) => logger.log(e.message, transaction.id)
@@ -18,7 +19,7 @@ const createProcessTransaction = ({
         continue;
       }
       logRulePassedForTransaction(rule, transaction);
-      await runMacros(rule.macros, transaction);
+      await runMacros(rule.macros, transaction, user);
     }
   };
 

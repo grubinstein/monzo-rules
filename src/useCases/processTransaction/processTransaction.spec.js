@@ -1,7 +1,6 @@
 import { jest } from "@jest/globals";
 import mockWebhookComposer from "../../../test/mockWebhookComposer.js";
 import mockTransaction from "../../../test/mockTransaction.js";
-import { text } from "express";
 
 jest.useFakeTimers();
 const runMacros = jest.fn();
@@ -11,7 +10,10 @@ const evaluatingFunctions = {
   text: jest.fn(),
   call: jest.fn(),
 };
-const db = { getAllRules: jest.fn() };
+const db = {
+  getAllRules: jest.fn(),
+  getUserByAccountId: jest.fn(),
+};
 const logger = { log: jest.fn().mockName("logger.log") };
 
 const processTransaction = mockWebhookComposer({
@@ -20,6 +22,11 @@ const processTransaction = mockWebhookComposer({
   db,
   logger,
 }).processTransaction;
+
+const mockUser = {
+  accessToken: "abc123",
+  refreshToken: "123abc",
+};
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -39,6 +46,7 @@ const mockProcessTransaction = async (transaction, rules, mockValues) => {
     }
   }
   db.getAllRules.mockReturnValue(rules);
+  db.getUserByAccountId.mockReturnValue(mockUser);
   await Promise.resolve();
   await processTransaction(transaction);
   await Promise.resolve();
@@ -91,7 +99,7 @@ describe("runs rules for transaction", () => {
     );
     expect(logger.log.mock.calls[0][1]).toBe(mockTransaction.id);
   });
-  it("calls runMacros with macros if no rules and call type is created", async () => {
+  it("calls runMacros with macros, transaction and user if no rules and call type is created", async () => {
     await mockProcessTransaction(
       mockTransaction,
       [
@@ -107,6 +115,7 @@ describe("runs rules for transaction", () => {
     expect(runMacros.mock.calls[0]).toEqual([
       [{ name: "macro1" }, { name: "macro2" }],
       mockTransaction,
+      mockUser,
     ]);
   });
   it.each([
