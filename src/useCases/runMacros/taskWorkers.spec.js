@@ -13,16 +13,20 @@ const workers = createWorkers(monzo);
 
 const mockUser = { accessToken: "abc123", refreshToken: "123abc" };
 
+const userVariables = {};
+
 const mockVariables = {
   user: mockUser,
   transactionAmount: mockTransaction.amount,
   transactionId: mockTransaction.id,
   macroName: "macro1",
+  userVariables: { ...userVariables },
 };
 
 beforeEach(() => {
   jest.clearAllMocks();
   jest.resetAllMocks();
+  Object.keys(userVariables).forEach((key) => delete userVariables[key]);
 });
 
 describe("balance worker", () => {
@@ -56,12 +60,12 @@ describe("balance worker", () => {
     await runBalanceTask();
     expect(monzo.getPotBalance.mock.calls[0]).toEqual([mockUser, "Savings"]);
   });
-  it("adds balance to variables as specified property", async () => {
+  it("adds balance to user variables as specified property", async () => {
     monzo.getPotBalance.mockImplementation(() => {
       return 1200;
     });
     const result = await runBalanceTask();
-    expect(result.balVar).toBe(1200);
+    expect(result.userVariables.balVar).toBe(1200);
   });
   it("throws error if no pot name is passed", async () => {
     const runWithoutPotName = () => runBalanceTaskWithErrors("");
@@ -143,7 +147,9 @@ describe("deposit worker", () => {
     expect(monzo.deposit.mock.calls[0][3]).toBe("1234macro1");
   });
   it("resolves string to amount from variables", async () => {
-    await runDepositTask(undefined, "testVar", { testVar: 200 });
+    await runDepositTask(undefined, "testVar", {
+      userVariables: { testVar: 200 },
+    });
     expect(monzo.deposit.mock.calls[0][2]).toBe(200);
   });
   it("throws error if deposit amount is string and not passed in variables", async () => {
@@ -236,8 +242,10 @@ describe("withdraw worker", () => {
     });
     expect(monzo.withdraw.mock.calls[0][3]).toBe("1234macro1");
   });
-  it("resolves string to amount from variables", async () => {
-    await runWithdrawTask(undefined, "testVar", { testVar: 200 });
+  it("resolves string to amount from user variables", async () => {
+    await runWithdrawTask(undefined, "testVar", {
+      userVariables: { testVar: 200 },
+    });
     expect(monzo.withdraw.mock.calls[0][2]).toBe(200);
   });
   it("throws error if withdraw amount is string and not passed in variables", async () => {
@@ -344,7 +352,7 @@ describe("Notify worker", () => {
       undefined,
       undefined,
       undefined,
-      { word: "with", number: "2" }
+      { userVariables: { word: "with", number: "2" } }
     );
     expect(monzo.notify.mock.calls[0][1]).toBe("Title with 2 variables");
   });
@@ -354,7 +362,7 @@ describe("Notify worker", () => {
       "Body #word #number variables",
       undefined,
       undefined,
-      { word: "with", number: "2" }
+      { userVariables: { word: "with", number: "2" } }
     );
     expect(monzo.notify.mock.calls[0][2]).toBe("Body with 2 variables");
   });
@@ -364,7 +372,7 @@ describe("Notify worker", () => {
       undefined,
       undefined,
       undefined,
-      { remaining: 2534 }
+      { userVariables: { remaining: 2534 } }
     );
     expect(monzo.notify.mock.calls[0][1]).toBe("You have £25.34 left");
   });
@@ -374,7 +382,7 @@ describe("Notify worker", () => {
       undefined,
       undefined,
       undefined,
-      { remaining: 2534 }
+      { userVariables: { remaining: 2534 } }
     );
     expect(monzo.notify.mock.calls[0][1]).toBe("You have $25.34 left");
   });
@@ -384,7 +392,7 @@ describe("Notify worker", () => {
       "You have $dollars and £pounds left",
       undefined,
       undefined,
-      { dollars: 12354, pounds: 94 }
+      { userVariables: { dollars: 12354, pounds: 94 } }
     );
     expect(monzo.notify.mock.calls[0][2]).toBe(
       "You have $123.54 and £0.94 left"
@@ -396,7 +404,7 @@ describe("Notify worker", () => {
       "Body with £goodNum and $badNum",
       undefined,
       undefined,
-      { good: "GREAT", goodNum: 1234 }
+      { userVariables: { good: "GREAT", goodNum: 1234 } }
     );
     expect(monzo.notify.mock.calls[0][1]).toBe(
       "Title with GREAT and #bad vars"
@@ -428,7 +436,10 @@ describe("math worker", () => {
     variable = "mathVar",
     variableDelta
   ) => {
-    const variables = { ...mockVariables, ...variableDelta };
+    const newUserVariables = {};
+    const variables = { ...mockVariables };
+    variables.userVariables = newUserVariables;
+    Object.assign(variables, variableDelta);
     const task = {
       operation,
       operands: [firstOperand, secondOperand],
@@ -439,19 +450,22 @@ describe("math worker", () => {
   };
   it("returns all passed variables", async () => {
     const result = runMathTask();
-    expect(result).toEqual(expect.objectContaining(mockVariables));
+    expect(Object.keys(result)).toEqual(
+      expect.arrayContaining(Object.keys(mockVariables))
+    );
   });
   it("adds two numbers and puts result in specified variable", () => {
     const result = runMathTask(12, "add", 13);
-    expect(result.mathVar).toBe(25);
+    expect(result.userVariables.mathVar).toBe(25);
   });
   it("adds negative numbers correctly", () => {
+    console.log("HEEEEEERREE");
     const result1 = runMathTask(-12, "add", 13);
     const result2 = runMathTask(12, "add", -13);
     const result3 = runMathTask(-12, "add", -13);
-    expect(result1.mathVar).toBe(1);
-    expect(result2.mathVar).toBe(-1);
-    expect(result3.mathVar).toBe(-25);
+    expect(result1.userVariables.mathVar).toBe(1);
+    expect(result2.userVariables.mathVar).toBe(-1);
+    expect(result3.userVariables.mathVar).toBe(-25);
   });
   it("adds more than two numbers", () => {
     const task = {
@@ -460,27 +474,27 @@ describe("math worker", () => {
       variable: "mathVar",
     };
     const result = workers.math(mockVariables, task);
-    expect(result.mathVar).toBe(114.5);
+    expect(result.userVariables.mathVar).toBe(114.5);
   });
   it("subtracts two numbers", () => {
     const result1 = runMathTask(-12, "subtract", 13);
     const result2 = runMathTask(12, "subtract", -13);
     const result3 = runMathTask(-12, "subtract", -13);
     const result4 = runMathTask(12, "subtract", 13);
-    expect(result1.mathVar).toBe(-25);
-    expect(result2.mathVar).toBe(25);
-    expect(result3.mathVar).toBe(1);
-    expect(result4.mathVar).toBe(-1);
+    expect(result1.userVariables.mathVar).toBe(-25);
+    expect(result2.userVariables.mathVar).toBe(25);
+    expect(result3.userVariables.mathVar).toBe(1);
+    expect(result4.userVariables.mathVar).toBe(-1);
   });
   it("multiplies two numbers", () => {
     const result1 = runMathTask(2, "multiply", 13);
     const result2 = runMathTask(2, "multiply", -13);
     const result3 = runMathTask(-2, "multiply", -13);
     const result4 = runMathTask(-12.5, "multiply", -4);
-    expect(result1.mathVar).toBe(26);
-    expect(result2.mathVar).toBe(-26);
-    expect(result3.mathVar).toBe(26);
-    expect(result4.mathVar).toBe(50);
+    expect(result1.userVariables.mathVar).toBe(26);
+    expect(result2.userVariables.mathVar).toBe(-26);
+    expect(result3.userVariables.mathVar).toBe(26);
+    expect(result4.userVariables.mathVar).toBe(50);
   });
   it("multiplies more than two numbers", () => {
     const task = {
@@ -489,17 +503,17 @@ describe("math worker", () => {
       variable: "mathVar",
     };
     const result = workers.math(mockVariables, task);
-    expect(result.mathVar).toBe(-3250);
+    expect(result.userVariables.mathVar).toBe(-3250);
   });
   it("divides two numbers", () => {
     const result1 = runMathTask(6, "divide", 2);
     const result2 = runMathTask(-12, "divide", 4);
     const result3 = runMathTask(50, "divide", -4);
     const result4 = runMathTask(-20.4, "divide", -5.1);
-    expect(result1.mathVar).toBe(3);
-    expect(result2.mathVar).toBe(-3);
-    expect(result3.mathVar).toBe(-12.5);
-    expect(result4.mathVar).toBe(4);
+    expect(result1.userVariables.mathVar).toBe(3);
+    expect(result2.userVariables.mathVar).toBe(-3);
+    expect(result3.userVariables.mathVar).toBe(-12.5);
+    expect(result4.userVariables.mathVar).toBe(4);
   });
   it("adds nothing if only one operand supplied", () => {
     const task = {
@@ -508,7 +522,7 @@ describe("math worker", () => {
       variable: "mathVar",
     };
     const result = workers.math(mockVariables, task);
-    expect(result.mathVar).toBe(1);
+    expect(result.userVariables.mathVar).toBe(1);
   });
   it("subtracts nothing if only one operand supplied", () => {
     const task = {
@@ -517,7 +531,7 @@ describe("math worker", () => {
       variable: "mathVar",
     };
     const result = workers.math(mockVariables, task);
-    expect(result.mathVar).toBe(1);
+    expect(result.userVariables.mathVar).toBe(1);
   });
   it("divides by 1 if only one operand supplied", () => {
     const task = {
@@ -526,7 +540,7 @@ describe("math worker", () => {
       variable: "mathVar",
     };
     const result = workers.math(mockVariables, task);
-    expect(result.mathVar).toBe(10);
+    expect(result.userVariables.mathVar).toBe(10);
   });
   it("multiplies by 1 if only one operand supplied", () => {
     const task = {
@@ -535,7 +549,7 @@ describe("math worker", () => {
       variable: "mathVar",
     };
     const result = workers.math(mockVariables, task);
-    expect(result.mathVar).toBe(10);
+    expect(result.userVariables.mathVar).toBe(10);
   });
   it("throws an error if no operands are supplied", () => {
     const task = {
@@ -570,10 +584,12 @@ describe("math worker", () => {
   });
   it("performs operations using variables", () => {
     const result = runMathTask("firstop", "add", "secondop", undefined, {
-      firstop: 3,
-      secondop: 5,
+      userVariables: {
+        firstop: 3,
+        secondop: 5,
+      },
     });
-    expect(result.mathVar).toBe(8);
+    expect(result.userVariables.mathVar).toBe(8);
   });
   it("throws error if variable operands are not found", () => {
     const runWithInvalidOperands = () =>
@@ -585,7 +601,9 @@ describe("math worker", () => {
     );
   });
   it("overwrites existing value if variable exists", () => {
-    const result = runMathTask("sum", "add", 10, "sum", { sum: 10 });
-    expect(result.sum).toBe(20);
+    const result = runMathTask("sum", "add", 10, "sum", {
+      userVariables: { sum: 10 },
+    });
+    expect(result.userVariables.sum).toBe(20);
   });
 });

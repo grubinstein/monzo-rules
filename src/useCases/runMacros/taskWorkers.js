@@ -1,14 +1,14 @@
 const createWorkers = (monzo) => {
   const balanceWorker = async (variables, task) => {
     const { pot, variable } = task;
-    const { user } = variables;
+    const { user, userVariables } = variables;
     throwErrorForMissingVars(
       "Balance",
       [pot, variable, user],
       ["pot", "variable", "user"]
     );
     const balance = await monzo.getPotBalance(user, pot);
-    variables[variable] = balance;
+    userVariables[variable] = balance;
     return variables;
   };
 
@@ -21,7 +21,9 @@ const createWorkers = (monzo) => {
       [pot, amount, user, macroName],
       ["pot", "amount", "user", "macro name"]
     );
-    const amountValue = isNaN(amount) ? variables[amount] : amount;
+    const amountValue = isNaN(amount)
+      ? variables.userVariables[amount]
+      : amount;
     if (!amountValue) {
       throw new Error(`${taskName} amount could not be resolved.`);
     }
@@ -39,10 +41,13 @@ const createWorkers = (monzo) => {
 
   const notifyWorker = async (variables, task) => {
     const { title, body, url, imageUrl } = task;
-    const { user } = variables;
+    const { user, userVariables } = variables;
     throwErrorForMissingVars("Notify", [title, user], ["title", "user"]);
-    const resolvedTitle = resolveVariablesAndFormatCurrency(variables, title);
-    const resolvedBody = resolveVariablesAndFormatCurrency(variables, body);
+    const resolvedTitle = resolveVariablesAndFormatCurrency(
+      userVariables,
+      title
+    );
+    const resolvedBody = resolveVariablesAndFormatCurrency(userVariables, body);
     await monzo.notify(user, resolvedTitle, resolvedBody, url, imageUrl);
     return variables;
   };
@@ -66,18 +71,19 @@ const createWorkers = (monzo) => {
 
   const mathWorker = (variables, task) => {
     const { operation, operands, variable } = task;
+    const { userVariables } = variables;
     throwErrorForMissingVars(
       "Math",
       [operands, operation],
       ["operands", "operation"]
     );
     const operandsValue = operands.map((arg) =>
-      isNaN(arg) ? variables[arg] : arg
+      isNaN(arg) ? userVariables[arg] : arg
     );
     if (operandsValue.some((op) => !op)) {
       throw new Error("Math task operand could not be resolved.");
     }
-    variables[variable] = doMath(operation, operandsValue);
+    userVariables[variable] = doMath(operation, operandsValue);
     return variables;
   };
 
