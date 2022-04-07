@@ -1,9 +1,4 @@
 const createWebhookHandler = ({ processTransaction, db, logger }) => {
-  const storeRequest = async (transaction) => {
-    const created = await db.addRequestIfNew(transaction);
-    return created;
-  };
-
   const getTransactionWithType = (req) => {
     const transaction = req.body.data;
     transaction.callType = req.body.type;
@@ -20,7 +15,7 @@ const createWebhookHandler = ({ processTransaction, db, logger }) => {
 
   const handleWebhook = async (req, res) => {
     const transaction = getTransactionWithType(req);
-    const newRequest = await storeRequest(transaction);
+    const newRequest = await db.addRequestIfNew(transaction);
     logRequest(newRequest, transaction);
     if (newRequest) {
       await processTransaction(transaction);
