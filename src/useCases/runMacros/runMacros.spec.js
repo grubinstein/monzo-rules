@@ -16,6 +16,8 @@ const logger = { log: jest.fn() };
 
 const runMacros = createRunMacros({ workers, logger });
 
+const mockUser = { accessToken: "abc123", refreshToken: "123abc" };
+
 beforeEach(() => {
   jest.clearAllMocks();
   jest.resetAllMocks();
@@ -29,7 +31,7 @@ describe("run macros", () => {
     const transaction = { ...mockTransaction, ...transactionFields };
     const tasks = taskTypes.map((type) => ({ type }));
     const macros = [{ name: "macro1", tasks }];
-    return runMacros(macros, transaction);
+    return runMacros(macros, transaction, mockUser);
   };
 
   it("returns undefined if macros is not passed", async () => {
@@ -54,11 +56,13 @@ describe("run macros", () => {
     await testRunMacros(["balance"]);
     const args = workers.balance.mock.calls[0];
     expect(Object.keys(args[0])).toEqual([
+      "user",
       "accountId",
       "transactionAmount",
       "transactionId",
       "macroName",
     ]);
+    expect(args[0].user).toBe(mockUser);
     expect(args[0].transactionAmount).toBe(mockTransaction.amount);
     expect(args[0].transactionId).toBe(mockTransaction.id);
     expect(args[0].accountId).toBe("acc_00009nnnePeCZC5bqBeu5x");

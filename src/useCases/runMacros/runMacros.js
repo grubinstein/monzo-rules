@@ -1,20 +1,21 @@
 const createRunMacros = ({ workers, logger }) => {
-  const runMacros = async (macros, transaction) => {
+  const runMacros = async (macros, transaction, user) => {
     if (!macros || !macros.length) {
       return;
     }
     for (let i = 0; i < macros.length; i++) {
       const macro = macros[i];
-      await runMacro(macro, transaction);
+      await runMacro(macro, transaction, user);
     }
   };
 
-  const runMacro = async (macro, transaction) => {
+  const runMacro = async (macro, transaction, user) => {
     if (!macro.tasks || !macro.tasks.length) {
       return;
     }
     const tasks = [...macro.tasks];
     const variables = {
+      user,
       accountId: transaction ? transaction.account_id : undefined,
       transactionAmount: transaction ? transaction.amount : undefined,
       transactionId: transaction ? transaction.id : undefined,
