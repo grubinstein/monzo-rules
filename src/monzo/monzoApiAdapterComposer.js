@@ -9,19 +9,13 @@ import * as logger from "../logging/colourLogger.js";
 import handleMonzoErrors from "../errors/axiosErrors.js";
 import createMonzoApiAdapter from "./monzoApiAdapter.js";
 import createGetMonzoClient from "./monzoClient.js";
-import createRefreshAccessToken from "../useCases/refreshAccessToken/refreshAccessToken.js";
-
-const refreshAccessToken = createRefreshAccessToken({
-  config,
-  db,
-  qs,
-});
 
 const getMonzoClient = createGetMonzoClient({
   axios,
   axiosRetry,
   readline,
-  refreshAccessToken,
+  db,
+  config,
   logger,
   handleMonzoErrors,
   qs,
