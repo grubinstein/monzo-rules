@@ -27,15 +27,6 @@ const createMonzoApiAdapter = ({ getMonzoClient, config, crypto, qs }) => {
     return response.data.webhooks;
   };
 
-  const removeUnnecessaryWebhooks = async (user) => {
-    const webhooks = await listWebhooks(user);
-    const monzoClient = getMonzoClient(user);
-    for (let i = 0; i < webhooks.length; i++) {
-      const webhook = webhooks[i];
-      await monzoClient.delete(`/webhooks/${webhook.id}`);
-    }
-  };
-
   const getAccounts = async (user) => {
     const monzoClient = getMonzoClient(user);
     const response = await monzoClient.get(`/accounts?account_type=uk_retail`);
@@ -142,7 +133,6 @@ const createMonzoApiAdapter = ({ getMonzoClient, config, crypto, qs }) => {
     registerWebHook,
     listWebhooks,
     getAccounts,
-    removeUnnecessaryWebhooks,
     getPots,
     getPotBalance,
     getPotId,
