@@ -459,7 +459,6 @@ describe("math worker", () => {
     expect(result.userVariables.mathVar).toBe(25);
   });
   it("adds negative numbers correctly", () => {
-    console.log("HEEEEEERREE");
     const result1 = runMathTask(-12, "add", 13);
     const result2 = runMathTask(12, "add", -13);
     const result3 = runMathTask(-12, "add", -13);
