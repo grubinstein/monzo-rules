@@ -39,11 +39,11 @@ beforeEach(() => {
 
 describe("webhook management", () => {
   beforeEach(() => {
-  monzoClient.get.mockImplementation(() => ({
-    data: {
-      webhooks: [{ account_id: "accountxyz789", url: "www.test.com/hook" }],
-    },
-  }));
+    monzoClient.get.mockImplementation(() => ({
+      data: {
+        webhooks: [{ account_id: "accountxyz789", url: "www.test.com/hook" }],
+      },
+    }));
   });
   describe("listWebhooks", () => {
     const { listWebhooks } = monzo;
@@ -121,3 +121,24 @@ describe("getAccounts", () => {
   });
 });
 
+describe("getPots", () => {
+  const { getPots } = monzo;
+  beforeEach(() => {
+    monzoClient.get.mockImplementation(() => ({
+      data: {
+        pots: [{ pot_id: "accountxyz789" }],
+      },
+    }));
+  });
+  it("gets /accounts with account_type", async () => {
+    await getPots(mockUser);
+    expect(monzoClient.get).toHaveBeenCalled();
+    expect(callArgs(monzoClient.get)[0]).toBe(
+      "/pots?current_account_id=accountabc123"
+    );
+  });
+  it("returns accounts", async () => {
+    const accounts = await getPots(mockUser);
+    expect(accounts).toEqual([{ pot_id: "accountxyz789" }]);
+  });
+});
