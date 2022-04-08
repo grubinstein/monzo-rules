@@ -33,12 +33,18 @@ const mockUser = { accountId: "accountabc123" };
 
 const callArgs = (func) => func.mock.calls[0];
 
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+
 describe("webhook management", () => {
+  beforeEach(() => {
   monzoClient.get.mockImplementation(() => ({
     data: {
       webhooks: [{ account_id: "accountxyz789", url: "www.test.com/hook" }],
     },
   }));
+  });
   describe("listWebhooks", () => {
     const { listWebhooks } = monzo;
     it("calls get with accountId", async () => {
@@ -92,3 +98,26 @@ describe("webhook management", () => {
     });
   });
 });
+
+describe("getAccounts", () => {
+  const { getAccounts } = monzo;
+  beforeEach(() => {
+    monzoClient.get.mockImplementation(() => ({
+      data: {
+        accounts: [{ account_id: "accountxyz789" }],
+      },
+    }));
+  });
+  it("gets /accounts with account_type", async () => {
+    await getAccounts(mockUser);
+    expect(monzoClient.get).toHaveBeenCalled();
+    expect(callArgs(monzoClient.get)[0]).toBe(
+      "/accounts?account_type=uk_retail"
+    );
+  });
+  it("returns accounts", async () => {
+    const accounts = await getAccounts(mockUser);
+    expect(accounts).toEqual([{ account_id: "accountxyz789" }]);
+  });
+});
+
