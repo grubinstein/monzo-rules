@@ -1,9 +1,4 @@
-const createMonzoApiAdapter = async ({
-  getMonzoClient,
-  config,
-  crypto,
-  qs,
-}) => {
+const createMonzoApiAdapter = ({ getMonzoClient, config, crypto, qs }) => {
   const registerWebHook = async (user) => {
     const appUrl = config.get("appUrl");
     const webhookUrl = appUrl + "/hook";
@@ -21,7 +16,6 @@ const createMonzoApiAdapter = async ({
       url: webhookUrl,
     };
     const monzoClient = getMonzoClient(user);
-    console.log("Registering webhook for user " + user.id);
     await monzoClient.post("/webhooks", qs.stringify(params));
   };
 
@@ -30,7 +24,6 @@ const createMonzoApiAdapter = async ({
     const response = await monzoClient.get(
       `/webhooks?account_id=${user.accountId}`
     );
-    console.log(response.data.webhooks);
     return response.data.webhooks;
   };
 
