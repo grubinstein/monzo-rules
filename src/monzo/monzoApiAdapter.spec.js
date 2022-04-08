@@ -11,11 +11,13 @@ const monzoClient = {
 };
 const getMonzoClient = () => monzoClient;
 
-const config = jest
-  .fn()
-  .mockImplementation((property) =>
-    property == "appUrl" ? "www.test.com" : undefined
-  );
+const config = {
+  get: jest
+    .fn()
+    .mockImplementation((property) =>
+      property == "appUrl" ? "www.test.com" : undefined
+    ),
+};
 
 const cryptoResult = crypto.randomBytes(16);
 const mockCrypto = { randomBytes: jest.fn().mockReturnValue(cryptoResult) };
@@ -39,21 +41,54 @@ describe("webhook management", () => {
   }));
   describe("listWebhooks", () => {
     const { listWebhooks } = monzo;
-    it("listWebhooks calls get with accountId", async () => {
+    it("calls get with accountId", async () => {
       await listWebhooks(mockUser);
       expect(monzoClient.get).toHaveBeenCalled();
       expect(callArgs(monzoClient.get)[0]).toBe(
         `/webhooks?account_id=${mockUser.accountId}`
       );
     });
-    it("listWebhooks returns webhooks", async () => {
+    it("returns webhooks", async () => {
       const webhooks = await listWebhooks(mockUser);
       expect(webhooks).toEqual([
         { account_id: "accountxyz789", url: "www.test.com/hook" },
       ]);
     });
-    it("listWebhooks throws error if user is not passed", async () => {
+    it("throws error if user is not passed", async () => {
       await expect(listWebhooks).rejects.toThrow();
+    });
+  });
+  describe("registerWebHook", () => {
+    const { registerWebHook } = monzo;
+    it("does not create webhook if it already exists", async () => {
+      await registerWebHook({ accountId: "accountxyz789" });
+      expect(monzoClient.post).not.toHaveBeenCalled();
+    });
+    it("posts to webhooks", async () => {
+      await registerWebHook(mockUser);
+      expect(monzoClient.post).toHaveBeenCalled();
+      expect(callArgs(monzoClient.post)[0]).toEqual("/webhooks");
+    });
+    it("posts with account_id and webhook url", async () => {
+      await registerWebHook(mockUser);
+      expect(callArgs(monzoClient.post)[1]).toEqual({
+        account_id: mockUser.accountId,
+        url: "www.test.com/hook",
+      });
+    });
+    it("posts if existing webhook is for incorrect url", async () => {
+      monzoClient.get.mockImplementation(() => ({
+        data: {
+          webhooks: [
+            { account_id: "accountxyz789", url: "www.test.com/hookers" },
+          ],
+        },
+      }));
+      await registerWebHook({ accountId: "accountxyz789" });
+      expect(monzoClient.post).toHaveBeenCalled();
+    });
+    it("throws an error if no user is passed", async () => {
+      await expect(registerWebHook).rejects.toThrow();
     });
   });
 });
