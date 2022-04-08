@@ -5,6 +5,7 @@ const createGetMonzoClient = ({
   refreshAccessToken,
   logger,
   handleMonzoErrors,
+  qs,
 }) => {
   const askQuestion = (query) => {
     const rl = readline.createInterface({
@@ -71,9 +72,9 @@ const createGetMonzoClient = ({
     });
 
     const monzoClient = {
-      post: async (...args) => {
+      post: async (url, params) => {
         const response = await monzoAxiosClient
-          .post(...args)
+          .post(url, qs.stringify(params))
           .catch(handleMonzoErrors);
         return response;
       },
@@ -89,9 +90,9 @@ const createGetMonzoClient = ({
           .catch(handleMonzoErrors);
         return response;
       },
-      put: async (...args) => {
+      put: async (url, params) => {
         const response = await monzoAxiosClient
-          .put(...args)
+          .post(url, qs.stringify(params))
           .catch(handleMonzoErrors);
         return response;
       },

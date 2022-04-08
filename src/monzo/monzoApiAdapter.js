@@ -1,4 +1,4 @@
-const createMonzoApiAdapter = ({ getMonzoClient, config, crypto, qs }) => {
+const createMonzoApiAdapter = ({ getMonzoClient, config, crypto }) => {
   const registerWebHook = async (user) => {
     const appUrl = config.get("appUrl");
     const webhookUrl = appUrl + "/hook";
@@ -16,7 +16,7 @@ const createMonzoApiAdapter = ({ getMonzoClient, config, crypto, qs }) => {
       url: webhookUrl,
     };
     const monzoClient = getMonzoClient(user);
-    await monzoClient.post("/webhooks", qs.stringify(params));
+    await monzoClient.post("/webhooks", params);
   };
 
   const listWebhooks = async (user) => {
@@ -78,7 +78,7 @@ const createMonzoApiAdapter = ({ getMonzoClient, config, crypto, qs }) => {
       dedupe_id,
     };
     const monzoClient = getMonzoClient(user);
-    await monzoClient.put(`/pots/${potId}/withdraw`, qs.stringify(params));
+    await monzoClient.put(`/pots/${potId}/withdraw`, params);
   };
 
   const deposit = async (user, pot, amount, id) => {
@@ -91,7 +91,7 @@ const createMonzoApiAdapter = ({ getMonzoClient, config, crypto, qs }) => {
       dedupe_id,
     };
     const monzoClient = getMonzoClient(user);
-    await monzoClient.put(`/pots/${potId}/deposit`, qs.stringify(params));
+    await monzoClient.put(`/pots/${potId}/deposit`, params);
   };
 
   const getTransactions = async (user, from, to) => {
@@ -126,7 +126,7 @@ const createMonzoApiAdapter = ({ getMonzoClient, config, crypto, qs }) => {
       },
     };
     const monzoClient = getMonzoClient(user);
-    await monzoClient.post(`/feed`, qs.stringify(params));
+    await monzoClient.post(`/feed`, params);
   };
 
   return {

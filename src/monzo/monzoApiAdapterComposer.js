@@ -24,13 +24,13 @@ const getMonzoClient = createGetMonzoClient({
   refreshAccessToken,
   logger,
   handleMonzoErrors,
+  qs,
 });
 
 const monzoApiAdapter = await createMonzoApiAdapter({
   getMonzoClient,
   config,
   crypto,
-  qs,
 });
 
 export default monzoApiAdapter;
