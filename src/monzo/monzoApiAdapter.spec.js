@@ -142,3 +142,49 @@ describe("getPots", () => {
     expect(accounts).toEqual([{ pot_id: "accountxyz789" }]);
   });
 });
+
+describe("getPotBalance", () => {
+  const { getPotBalance } = monzo;
+  beforeEach(() => {
+    monzoClient.get.mockImplementation((url) => ({
+      data: url.includes("balance")
+        ? { balance: 1500 }
+        : {
+            pots: [{ name: "Savings", pot_id: "accountxyz789", balance: 2000 }],
+          },
+    }));
+  });
+  it("gets /balance with accountId if pot is current", async () => {
+    await getPotBalance(mockUser, "current");
+    expect(monzoClient.get).toHaveBeenCalled();
+    expect(callArgs(monzoClient.get)[0]).toBe(
+      `/balance?account_id=accountabc123`
+    );
+  });
+  it("gets /balance with accountId if pot is Current", async () => {
+    await getPotBalance(mockUser, "Current");
+    expect(monzoClient.get).toHaveBeenCalled();
+    expect(callArgs(monzoClient.get)[0]).toBe(
+      `/balance?account_id=accountabc123`
+    );
+  });
+  it("returns balance for current", async () => {
+    const balance = await getPotBalance(mockUser, "Current");
+    expect(balance).toBe(1500);
+  });
+  it("gets /pots with accountId if pot is other", async () => {
+    await getPotBalance(mockUser, "Savings");
+    expect(monzoClient.get).toHaveBeenCalled();
+    expect(callArgs(monzoClient.get)[0]).toBe(
+      `/pots?current_account_id=accountabc123`
+    );
+  });
+  it("returns balance if pot name is matched", async () => {
+    const balance = await getPotBalance(mockUser, "Savings");
+    expect(balance).toBe(2000);
+  });
+  it("throws an error if pot is not found", async () => {
+    const runWithBadPot = () => getPotBalance(mockUser, "Badpot");
+    expect(runWithBadPot).rejects.toThrow("Pot could not be found.");
+  });
+});

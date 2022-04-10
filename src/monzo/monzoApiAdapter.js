@@ -55,11 +55,14 @@ const createMonzoApiAdapter = ({ getMonzoClient, config, crypto }) => {
   };
 
   const getPotBalance = async (user, potName) => {
-    if (potName == "current") {
+    if (potName == "current" || potName == "Current") {
       const currentBalance = await getCurrentBalance(user);
       return currentBalance;
     }
     const pot = await getPot(user, potName);
+    if (!pot) {
+      throw new Error("Pot could not be found.");
+    }
     return pot.balance;
   };
 
@@ -135,7 +138,6 @@ const createMonzoApiAdapter = ({ getMonzoClient, config, crypto }) => {
     getAccounts,
     getPots,
     getPotBalance,
-    getPotId,
     withdraw,
     deposit,
     getTransactions,
