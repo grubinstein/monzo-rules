@@ -15,7 +15,7 @@ const config = {
   get: jest
     .fn()
     .mockImplementation((property) =>
-      property == "appUrl" ? "www.test.com" : undefined
+      property == "appUrl" ? "www.test.com" : "www.testimage.com"
     ),
 };
 
@@ -296,5 +296,46 @@ describe("getTransactions", () => {
     await getTransactions(mockUser, from, to);
     expect(callArgs(monzoClient.get)[1].params.since).toBe(since);
     expect(callArgs(monzoClient.get)[1].params.before).toBe(before);
+  });
+});
+
+describe("notify", () => {
+  const { notify } = monzo;
+  it("posts to /feed", async () => {
+    await notify(mockUser);
+    expect(monzoClient.post).toHaveBeenCalled();
+    expect(callArgs(monzoClient.post)[0]).toBe("/feed");
+  });
+  it("passes accountId", async () => {
+    await notify(mockUser);
+    expect(callArgs(monzoClient.post)[1].account_id).toBe(mockUser.accountId);
+  });
+  it("passes type: basic", async () => {
+    await notify(mockUser);
+    expect(callArgs(monzoClient.post)[1].type).toBe("basic");
+  });
+  it("passes title, body and url", async () => {
+    await notify(mockUser, "Mock Title", "Mock body", "www.mock.com");
+    expect(callArgs(monzoClient.post)[1].params.title).toBe("Mock Title");
+    expect(callArgs(monzoClient.post)[1].params.body).toBe("Mock body");
+    expect(callArgs(monzoClient.post)[1].url).toBe("www.mock.com");
+  });
+  it("passes deault image_url if none given", async () => {
+    await notify(mockUser, "Mock Title", "Mock body", "www.mock.com");
+    expect(callArgs(monzoClient.post)[1].params.image_url).toBe(
+      "www.testimage.com"
+    );
+  });
+  it("passes image_url if given", async () => {
+    await notify(
+      mockUser,
+      "Mock Title",
+      "Mock body",
+      "www.mock.com",
+      "www.otherimage.com"
+    );
+    expect(callArgs(monzoClient.post)[1].params.image_url).toBe(
+      "www.otherimage.com"
+    );
   });
 });
