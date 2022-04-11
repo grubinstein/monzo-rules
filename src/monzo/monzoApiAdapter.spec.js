@@ -188,3 +188,76 @@ describe("getPotBalance", () => {
     expect(runWithBadPot).rejects.toThrow("Pot could not be found.");
   });
 });
+
+describe("withdraw", () => {
+  const { withdraw } = monzo;
+  beforeEach(() => {
+    monzoClient.get.mockImplementation(() => ({
+      data: {
+        pots: [{ name: "Savings", id: "potabc123", balance: 2000 }],
+      },
+    }));
+  });
+  it("puts to /pots/potid/withdraw", async () => {
+    await withdraw(mockUser, "Savings", 150, "deduped");
+    expect(monzoClient.put).toHaveBeenCalled();
+    expect(callArgs(monzoClient.put)[0]).toBe("/pots/potabc123/withdraw");
+  });
+  it("passes params in put", async () => {
+    await withdraw(mockUser, "Savings", 150, "deduped");
+    const params = {
+      destination_account_id: mockUser.accountId,
+      source_account_id: mockUser.accountId,
+      amount: 150,
+      dedupe_id: "deduped",
+    };
+    expect(callArgs(monzoClient.put)[1]).toEqual(params);
+  });
+  it("created dedupe ID if none is provided", async () => {
+    await withdraw(mockUser, "Savings", 150);
+    expect(callArgs(monzoClient.put)[1].dedupe_id).toBe(
+      cryptoResult.toString("hex")
+    );
+  });
+  it("throws error if pot is not found", async () => {
+    const runWithBadPot = () => withdraw(mockUser, "Badpot", 150);
+    expect(runWithBadPot).rejects.toThrow("Pot could not be found.");
+  });
+});
+
+describe("deposit", () => {
+  const { deposit } = monzo;
+  beforeEach(() => {
+    monzoClient.get.mockImplementation(() => ({
+      data: {
+        pots: [{ name: "Savings", id: "potabc123", balance: 2000 }],
+      },
+    }));
+  });
+  it("puts to /pots/potid/deposit", async () => {
+    await deposit(mockUser, "Savings", 150, "deduped");
+    expect(monzoClient.put).toHaveBeenCalled();
+    expect(callArgs(monzoClient.put)[0]).toBe("/pots/potabc123/deposit");
+  });
+  it("passes params in put", async () => {
+    await deposit(mockUser, "Savings", 150, "deduped");
+    const params = {
+      destination_account_id: mockUser.accountId,
+      source_account_id: mockUser.accountId,
+      amount: 150,
+      dedupe_id: "deduped",
+    };
+    expect(callArgs(monzoClient.put)[1]).toEqual(params);
+  });
+  it("created dedupe ID if none is provided", async () => {
+    await deposit(mockUser, "Savings", 150);
+    expect(callArgs(monzoClient.put)[1].dedupe_id).toBe(
+      cryptoResult.toString("hex")
+    );
+  });
+  it("throws error if pot is not found", async () => {
+    const runWithBadPot = () => deposit(mockUser, "Badpot", 150);
+    expect(runWithBadPot).rejects.toThrow("Pot could not be found.");
+  });
+});
+
