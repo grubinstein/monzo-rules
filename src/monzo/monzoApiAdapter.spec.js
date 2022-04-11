@@ -261,3 +261,40 @@ describe("deposit", () => {
   });
 });
 
+describe("getTransactions", () => {
+  const { getTransactions } = monzo;
+  beforeEach(() => {
+    monzoClient.get.mockImplementation(() => ({
+      data: {
+        transactions: {
+          id: 5,
+        },
+      },
+    }));
+  });
+  it("gets from /transactions", async () => {
+    await getTransactions(mockUser);
+    expect(monzoClient.get).toHaveBeenCalled();
+    expect(callArgs(monzoClient.get)[0]).toBe("/transactions");
+  });
+  it("passes accountId in params", async () => {
+    await getTransactions(mockUser);
+    expect(callArgs(monzoClient.get)[1].params.account_id).toBe(
+      mockUser.accountId
+    );
+  });
+  it("passes undefined for since and before if not passed", async () => {
+    await getTransactions(mockUser);
+    expect(callArgs(monzoClient.get)[1].params.since).toBeUndefined();
+    expect(callArgs(monzoClient.get)[1].params.before).toBeUndefined();
+  });
+  it("formats from and to and passes", async () => {
+    const from = new Date(2020, 10, 23);
+    const to = new Date(2021, 1, 20);
+    const since = new Date(from).toISOString();
+    const before = new Date(to).toISOString();
+    await getTransactions(mockUser, from, to);
+    expect(callArgs(monzoClient.get)[1].params.since).toBe(since);
+    expect(callArgs(monzoClient.get)[1].params.before).toBe(before);
+  });
+});
