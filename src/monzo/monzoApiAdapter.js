@@ -51,7 +51,11 @@ const createMonzoApiAdapter = ({ getMonzoClient, config, crypto }) => {
 
   const getPot = async (user, potName) => {
     const pots = await getPots(user);
-    return pots.find((p) => p.name == potName);
+    const pot = pots.find((p) => p.name == potName);
+    if (!pot) {
+      throw new Error("Pot could not be found.");
+    }
+    return pot;
   };
 
   const getPotBalance = async (user, potName) => {
@@ -60,9 +64,6 @@ const createMonzoApiAdapter = ({ getMonzoClient, config, crypto }) => {
       return currentBalance;
     }
     const pot = await getPot(user, potName);
-    if (!pot) {
-      throw new Error("Pot could not be found.");
-    }
     return pot.balance;
   };
 
@@ -116,7 +117,7 @@ const createMonzoApiAdapter = ({ getMonzoClient, config, crypto }) => {
     title,
     body,
     url,
-    image_url = "https://www.animatedimages.org/data/media/198/animated-frog-image-0015.gif"
+    image_url = config.get("defaultNotifyImage")
   ) => {
     const params = {
       account_id: user.accountId,
