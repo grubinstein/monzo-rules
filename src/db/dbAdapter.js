@@ -22,7 +22,7 @@ export const storeUserAccessData = async ({
 };
 
 export const getUserByAccountId = async (accountId) => {
-  const user = await User.findOne({ where: { accountId } });
+  const user = await User.findOne({ where: { monzoAccountId: accountId } });
   return user;
 };
 
@@ -45,7 +45,7 @@ export const getRefreshToken = async (passedUser) => {
 };
 
 export const setAccountId = async (user, accountId) => {
-  await User.update({ accountId }, { where: { id: user.id } });
+  await User.update({ monzoAccountId: accountId }, { where: { id: user.id } });
 };
 
 export const getUserIdByEmail = async (email) => {
