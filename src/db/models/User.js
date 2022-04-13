@@ -16,13 +16,13 @@ User.init(
     refreshToken: {
       type: Sequelize.STRING,
     },
-    userId: {
+    monzoUserId: {
       type: Sequelize.STRING,
     },
     password: {
       type: Sequelize.STRING,
     },
-    accountId: {
+    monzoAccountId: {
       type: Sequelize.STRING,
     },
   },
