@@ -32,6 +32,18 @@ describe("getUserByAccountId", () => {
   });
 });
 
+describe("getUserByEmail", () => {
+  it("throws error if no email provided", async () => {
+    const runWithoutId = () => db.getUserByEmail();
+    expect(runWithoutId).rejects.toThrow();
+  });
+  it("returns correct user", async () => {
+    await User.create(mockUser);
+    const user = await db.getUserByEmail("user@mail.com");
+    expect(user).toEqual(expect.objectContaining(mockUser));
+  });
+});
+
 describe("mostRecentRequest", () => {
   it("returns true if no requests with the same transactionId exist", async () => {
     await Request.create({
