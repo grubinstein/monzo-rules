@@ -35,11 +35,6 @@ export const getUserByEmail = async (email) => {
   return user;
 };
 
-export const getAccessToken = async (email) => {
-  const user = await getUserByEmail(email);
-  return user.accessToken;
-};
-
 export const getRefreshToken = async (passedUser) => {
   const user = await User.findByPk(passedUser.id);
   return user.refreshToken;
