@@ -74,7 +74,7 @@ export const addRequest = async (transaction) => {
 
 export const addRequestIfNew = async (transaction) => {
   const { id: transactionId, hash, callType } = transaction;
-  const [_, created] = await Request.findOrCreate({
+  const [request, created] = await Request.findOrCreate({
     where: {
       transactionId,
       [sequelize.Op.or]: [
@@ -99,7 +99,19 @@ export const addRequestIfNew = async (transaction) => {
       transaction,
     },
   });
-  return created;
+  return created && request.id;
+};
+
+export const mostRecentRequest = async (transactionId, id) => {
+  const request = await Request.findOne({
+    where: {
+      transactionId,
+      id: {
+        [sequelize.Op.gt]: id,
+      },
+    },
+  });
+  return !request;
 };
 
 export const addRule = async (ruleObject) => {

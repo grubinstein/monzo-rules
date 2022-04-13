@@ -16,12 +16,24 @@ const createWebhookHandler = ({ hash, processTransaction, db, logger }) => {
 
   const handleWebhook = async (req, res) => {
     const transaction = getTransactionWithType(req);
-    const newRequest = await db.addRequestIfNew(transaction);
+    const createdRequestId = await db.addRequestIfNew(transaction);
+    if (createdRequestId) {
+      await wait(1000);
+    }
+    const newRequest =
+      createdRequestId &&
+      (await db.mostRecentRequest(transaction.id, createdRequestId));
     logRequest(newRequest, transaction);
     if (newRequest) {
       await processTransaction(transaction);
     }
     res.status(200).send();
+  };
+
+  const wait = async (ms) => {
+    return new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    });
   };
 
   return handleWebhook;

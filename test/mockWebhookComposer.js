@@ -12,8 +12,10 @@ import defaultHandleMonzoErrors from "../src/errors/axiosErrors.js";
 import createMonzoClient from "../src/monzo/monzoApiAdapter.js";
 import * as defaultDb from "../src/db/dbAdapter.js";
 import * as defaultLogger from "../src/logging/colourLogger.js";
+import defaultHash from "object-hash";
 
 const createMockWebhookService = ({
+  hash: mockHash,
   workers: mockWorkers,
   runMacros: mockRunMacros,
   evaluatingFunctions: mockEvaluatingFunctions,
@@ -60,6 +62,7 @@ const createMockWebhookService = ({
     processTransaction,
     db: mockDb || defaultDb,
     logger: mockLogger || defaultLogger,
+    hash: mockHash || defaultHash,
   };
 
   const webhookHandler = createWebhookHandler(webhookHandlerDependencies);
