@@ -11,24 +11,24 @@ beforeAll(async () => {
   await sequelize.sync();
 });
 
-describe("storeUserAccessData", () => {
-  const mockUser = {
-    access_token: "access123",
-    refreshToken: "refresh123",
-    user_id: "monzouser123",
-  };
-  beforeEach(async () => {
-    User.destroy({ truncate: true });
-    Request.destroy({ truncate: true });
-    User.create({
-      email: "mail@mail.com",
-      password: "923j9fijojf",
-      monzoAccountId: "monzoaccount123",
-      monzoUserId: "monzouser123",
-    });
+const mockUser = {
+  email: "user@mail.com",
+  accessToken: "access123",
+  refreshToken: "refresh123",
+  monzoUserId: "monzouser123",
+  password: "pass1234",
+  monzoAccountId: "monzoaccount123",
+};
+
+describe("getUserByAccountId", () => {
+  it("throws error if no accountId provided", async () => {
+    const runWithoutId = () => db.getUserByAccountId();
+    expect(runWithoutId).rejects.toThrow();
   });
-  it("stores access data for given monzo user", async () => {
-    //    await db.storeUserAccessData(mockUser);
+  it("returns correct user", async () => {
+    await User.create(mockUser);
+    const user = await db.getUserByAccountId("monzoaccount123");
+    expect(user).toEqual(expect.objectContaining(mockUser));
   });
 });
 
