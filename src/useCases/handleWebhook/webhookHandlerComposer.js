@@ -4,6 +4,7 @@ import createRunMacros from "../runMacros/runMacros.js";
 import createWorkers from "../runMacros/taskWorkers.js";
 import monzo from "../../monzo/monzoApiAdapterComposer.js";
 import evaluatingFunctions from "../processTransaction/filterEvaluatingFunctions.js";
+import hash from "object-hash";
 import * as db from "../../db/dbAdapter.js";
 import * as logger from "../../logging/colourLogger.js";
 
@@ -23,6 +24,7 @@ const processTransaction = createProcessTransaction(
 );
 
 const webhookHandlerDependencies = {
+  hash,
   processTransaction,
   db,
   logger,

@@ -1,4 +1,5 @@
 import Models from "./relations.js";
+import sequelize from "sequelize";
 const { Rule, Macro, User, Request } = Models;
 
 export const storeUserAccessData = async ({
@@ -72,12 +73,28 @@ export const addRequest = async (transaction) => {
 };
 
 export const addRequestIfNew = async (transaction) => {
-  const { id: transactionId, dedupe_id, callType } = transaction;
+  const { id: transactionId, hash, callType } = transaction;
   const [_, created] = await Request.findOrCreate({
-    where: { transactionId, callType },
+    where: {
+      transactionId,
+      [sequelize.Op.or]: [
+        { hash },
+        {
+          [sequelize.Op.and]: [
+            sequelize.where(sequelize.fn("date", sequelize.col("createdAt")), {
+              [sequelize.Op.gte]: new Date(Date.now() - 1000),
+            }),
+            sequelize.where(
+              sequelize.fn("LENGTH", sequelize.col("transaction")),
+              { [sequelize.Op.gt]: JSON.stringify(transaction).length }
+            ),
+          ],
+        },
+      ],
+    },
     defaults: {
       transactionId,
-      dedupe_id,
+      hash,
       callType,
       transaction,
     },

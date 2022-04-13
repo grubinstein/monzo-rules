@@ -1,6 +1,7 @@
 import { jest } from "@jest/globals";
 import webhookComposer from "../../../test/mockWebhookComposer.js";
 import mockWebhookRequest from "../../../test/mockWebhookRequest.js";
+import hash from "object-hash";
 
 const processTransaction = jest.fn();
 const logger = { log: jest.fn() };
@@ -42,6 +43,11 @@ describe("webhook handler", () => {
     expect(db.addRequestIfNew.mock.calls[0][0].callType).toBe(
       "transaction.created"
     );
+  });
+  it("adds hash to transaction before adding call type", async () => {
+    const contentHash = hash.MD5(mockWebhookRequest.body.data);
+    await webhookHandler(mockWebhookRequest, res);
+    expect(db.addRequestIfNew.mock.calls[0][0].hash).toBe(contentHash);
   });
   it("it logs for every webhook call", async () => {
     await webhookHandler(mockWebhookRequest, res);

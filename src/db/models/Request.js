@@ -10,14 +10,14 @@ Request.init(
     transactionId: {
       type: Sequelize.STRING,
     },
-    dedupe_id: {
-      type: Sequelize.STRING,
-    },
     callType: {
       type: Sequelize.STRING,
     },
     transaction: {
       type: Sequelize.JSON,
+    },
+    hash: {
+      type: Sequelize.STRING,
     },
   },
   {

@@ -1,6 +1,7 @@
-const createWebhookHandler = ({ processTransaction, db, logger }) => {
+const createWebhookHandler = ({ hash, processTransaction, db, logger }) => {
   const getTransactionWithType = (req) => {
     const transaction = req.body.data;
+    transaction.hash = hash.MD5(transaction);
     transaction.callType = req.body.type;
     return transaction;
   };
