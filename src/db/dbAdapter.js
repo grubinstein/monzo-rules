@@ -27,7 +27,7 @@ export const getUserByAccountId = async (accountId) => {
   return user;
 };
 
-export const getUserByEmail = async (email) => {
+const getUserByEmail = async (email) => {
   const user = await User.findOne({ where: { email } });
   if (!user) {
     throw new Error("User not found");
