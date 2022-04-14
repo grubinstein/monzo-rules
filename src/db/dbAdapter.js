@@ -44,6 +44,9 @@ export const getRefreshToken = async (passedUser) => {
 };
 
 export const setAccountId = async (user, accountId) => {
+  if (!accountId) {
+    throw new Error("No account ID provided.");
+  }
   await User.update({ monzoAccountId: accountId }, { where: { id: user.id } });
 };
 
