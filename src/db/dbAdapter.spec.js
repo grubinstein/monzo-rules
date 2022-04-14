@@ -80,6 +80,18 @@ describe("setAccountId", () => {
   });
 });
 
+describe("getUserIdByEmail", () => {
+  it("throws error if no email provided", async () => {
+    const runWithoutEmail = () => db.getUserIdByEmail();
+    expect(runWithoutEmail).rejects.toThrow();
+  });
+  it("provides correct user ID", async () => {
+    const user = await User.create(mockUser);
+    const id = await db.getUserIdByEmail("user@mail.com");
+    expect(id).toBe(user.id);
+  });
+});
+
 describe("mostRecentRequest", () => {
   it("returns true if no requests with the same transactionId exist", async () => {
     await Request.create({
