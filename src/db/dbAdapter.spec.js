@@ -32,6 +32,21 @@ describe("getUserByAccountId", () => {
   });
 });
 
+describe("getRefreshToken", () => {
+  it("throws error if no user is provided", async () => {
+    const runWithoutUser = () => db.getRefreshToken();
+    expect(runWithoutUser).rejects.toThrow();
+  });
+  it("throws error if user is missing id", async () => {
+    const runWithoutId = () => db.getRefreshToken(mockUser);
+    expect(runWithoutId).rejects.toThrow("User does not contain ID");
+  });
+  it("returns correct refreshToken", async () => {
+    const user = await User.create(mockUser);
+    const refreshToken = await db.getRefreshToken(user);
+    expect(refreshToken).toBe("refresh123");
+  });
+});
 describe("mostRecentRequest", () => {
   it("returns true if no requests with the same transactionId exist", async () => {
     await Request.create({

@@ -36,6 +36,9 @@ const getUserByEmail = async (email) => {
 };
 
 export const getRefreshToken = async (passedUser) => {
+  if (!passedUser.id) {
+    throw new Error("User does not contain ID");
+  }
   const user = await User.findByPk(passedUser.id);
   return user.refreshToken;
 };
