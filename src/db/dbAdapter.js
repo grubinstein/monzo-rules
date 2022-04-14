@@ -55,14 +55,6 @@ export const getUserIdByEmail = async (email) => {
   return user.id;
 };
 
-export const requestExists = async (transaction) => {
-  const { id: transactionId, callType } = transaction;
-  const result = await Request.findOne({
-    where: { transactionId, callType },
-  });
-  return !!result;
-};
-
 export const addRequest = async (transaction) => {
   const { id: transactionId, dedupe_id, callType } = transaction;
   await Request.create({
