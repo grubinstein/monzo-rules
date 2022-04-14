@@ -10,9 +10,6 @@ Request.init(
     transactionId: {
       type: Sequelize.STRING,
     },
-    callType: {
-      type: Sequelize.STRING,
-    },
     transaction: {
       type: Sequelize.JSON,
     },

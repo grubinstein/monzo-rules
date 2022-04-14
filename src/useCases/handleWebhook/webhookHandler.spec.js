@@ -38,12 +38,6 @@ describe("webhook handler", () => {
     await webhookHandler(mockWebhookRequest, res);
     expect(db.addRequestIfNew).toHaveBeenCalled();
   });
-  it("adds call type to transaction before passing to db", async () => {
-    await webhookHandler(mockWebhookRequest, res);
-    expect(db.addRequestIfNew.mock.calls[0][0].callType).toBe(
-      "transaction.created"
-    );
-  });
   it("adds hash to transaction before adding call type", async () => {
     const contentHash = hash.MD5(mockWebhookRequest.body.data);
     await webhookHandler(mockWebhookRequest, res);
@@ -60,9 +54,7 @@ describe("webhook handler", () => {
       type,
       data: { description, id },
     } = mockWebhookRequest.body;
-    expect(logger.log.mock.calls[0][0]).toBe(
-      `Handling: ${description} ${id} ${type}`
-    );
+    expect(logger.log.mock.calls[0][0]).toBe(`Handling: ${description} ${id}`);
   });
   it("it logs Repeat message for duplicate transactions/updates", async () => {
     db.addRequestIfNew.mockReturnValue(false);
@@ -71,9 +63,7 @@ describe("webhook handler", () => {
       type,
       data: { description, id },
     } = mockWebhookRequest.body;
-    expect(logger.log.mock.calls[0][0]).toBe(
-      `Repeat: ${description} ${id} ${type}`
-    );
+    expect(logger.log.mock.calls[0][0]).toBe(`Repeat: ${description} ${id}`);
   });
   it("doesn't call processTransaction for duplicate transactions/updates", async () => {
     db.addRequestIfNew.mockReturnValue(false);
@@ -103,9 +93,7 @@ describe("webhook handler", () => {
       type,
       data: { description, id },
     } = mockWebhookRequest.body;
-    expect(logger.log.mock.calls[0][0]).toBe(
-      `Repeat: ${description} ${id} ${type}`
-    );
+    expect(logger.log.mock.calls[0][0]).toBe(`Repeat: ${description} ${id}`);
   });
   it("passes id to logger", async () => {
     db.addRequestIfNew.mockReturnValue(false);

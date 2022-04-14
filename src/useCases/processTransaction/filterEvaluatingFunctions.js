@@ -55,17 +55,6 @@ const escapeWildcards = (pattern, value) => {
   return { pattern, value };
 };
 
-const evaluateCallTypeFilter = (filter, transaction) => {
-  const { call } = filter;
-  if (!["any", "created", "updated"].includes(call)) {
-    throw new Error("Invalid call type");
-  }
-  if (call == "any") {
-    return true;
-  }
-  return transaction.callType == "transaction." + call;
-};
-
 const getValue = (transaction, field) => {
   if (!field.includes(".")) {
     return transaction[field];
@@ -109,7 +98,6 @@ const evaluatingFunctions = {
   direction: evaluateDirectionFilter,
   amount: evaluateAmountFilter,
   text: evaluateTextFilter,
-  call: evaluateCallTypeFilter,
 };
 
 export default evaluatingFunctions;

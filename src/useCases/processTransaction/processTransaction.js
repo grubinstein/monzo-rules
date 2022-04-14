@@ -32,7 +32,6 @@ const createProcessTransaction = ({
 
   const runRuleForTransaction = async (rule, transaction) => {
     const filters = rule.filters;
-    addCallTypeTransactionFilterIfNone(filters);
     const rulePassed = filters.every(evaluateFilterForTransaction(transaction));
     return rulePassed;
   };
@@ -41,13 +40,6 @@ const createProcessTransaction = ({
     const evaluate = evaluatingFunctions[filter.type];
     const result = evaluate(filter, transaction);
     return result;
-  };
-
-  const addCallTypeTransactionFilterIfNone = (filters) => {
-    const callTypeFilter = filters.find((f) => f.type == "call");
-    if (!callTypeFilter) {
-      filters.unshift({ type: "call", call: "created" });
-    }
   };
 
   return processTransaction;

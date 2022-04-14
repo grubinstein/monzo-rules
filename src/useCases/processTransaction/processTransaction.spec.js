@@ -8,7 +8,6 @@ const evaluatingFunctions = {
   direction: jest.fn(),
   amount: jest.fn(),
   text: jest.fn(),
-  call: jest.fn(),
 };
 const db = {
   getAllRules: jest.fn(),
@@ -34,11 +33,6 @@ beforeEach(() => {
 });
 
 const mockProcessTransaction = async (transaction, rules, mockValues) => {
-  const callTypeFilter =
-    mockValues && mockValues.find((mock) => mock.func == "call");
-  if (!callTypeFilter) {
-    evaluatingFunctions.call.mockReturnValue(true);
-  }
   if (mockValues) {
     for (const mock of mockValues) {
       const { func, value } = mock;
@@ -63,15 +57,13 @@ describe("runs rules for transaction", () => {
             { type: "direction" },
             { type: "text" },
             { type: "amount" },
-            { type: "call" },
           ],
         },
       ],
       [
         { func: "direction", value: true },
-        { func: "text", value: true },
-        { func: "amount", value: false },
-        { func: "call", value: true },
+        { func: "text", value: false },
+        { func: "amount", value: true },
       ]
     );
     expect(evaluatingFunctions.direction.mock.calls[0]).toEqual([
@@ -82,24 +74,20 @@ describe("runs rules for transaction", () => {
       { type: "text" },
       mockTransaction,
     ]);
-    expect(evaluatingFunctions.amount.mock.calls[0]).toEqual([
-      { type: "amount" },
-      mockTransaction,
-    ]);
-    expect(evaluatingFunctions.call).not.toHaveBeenCalled();
+    expect(evaluatingFunctions.amount).not.toHaveBeenCalled();
   });
-  it("logs rule passed if no rules and call type is created", async () => {
+  it("logs rule passed if no rules", async () => {
     await mockProcessTransaction(
       mockTransaction,
       [{ name: "rule1", filters: [] }],
-      [{ func: "call", value: true }]
+      []
     );
     expect(logger.log.mock.calls[0][0]).toBe(
       `Rule rule1 PASSED for ${mockTransaction.description}`
     );
     expect(logger.log.mock.calls[0][1]).toBe(mockTransaction.id);
   });
-  it("calls runMacros with macros, transaction and user if no rules and call type is created", async () => {
+  it("calls runMacros with macros, transaction and user if no rules", async () => {
     await mockProcessTransaction(
       mockTransaction,
       [
@@ -109,7 +97,7 @@ describe("runs rules for transaction", () => {
           macros: [{ name: "macro1" }, { name: "macro2" }],
         },
       ],
-      [{ func: "call", value: true }]
+      []
     );
     expect(runMacros).toHaveBeenCalled();
     expect(runMacros.mock.calls[0]).toEqual([
@@ -120,22 +108,16 @@ describe("runs rules for transaction", () => {
   });
   it.each([
     {
-      filters: [],
-      mocks: [{ func: "call", value: false }],
-      run: "doesn't",
-      description: "no filters and call type updated",
-    },
-    {
       filters: [{ type: "direction", direction: "in" }],
       mocks: [{ func: "direction", value: true }],
       run: "does",
-      description: "single non-call filter passes",
+      description: "single filter passes",
     },
     {
       filters: [{ type: "direction", direction: "in" }],
       mocks: [{ func: "direction", value: false }],
       run: "doesn't",
-      description: "single non-call filter fails",
+      description: "single filter fails",
     },
     {
       filters: [
@@ -196,18 +178,6 @@ describe("runs rules for transaction", () => {
       ],
       run: "doesn't",
       description: "two filters conflict",
-    },
-    {
-      filters: [{ type: "call", call: "updated" }],
-      mocks: [{ func: "call", value: false }],
-      run: "doesn't",
-      description: "custom call filter fails",
-    },
-    {
-      filters: [{ type: "call", call: "updated" }],
-      mocks: [{ func: "call", value: true }],
-      run: "does",
-      description: "custom call filter passes",
     },
   ])("$run run macros when $description", async ({ filters, mocks, run }) => {
     await mockProcessTransaction(

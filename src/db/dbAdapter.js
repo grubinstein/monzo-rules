@@ -56,7 +56,7 @@ export const getUserIdByEmail = async (email) => {
 };
 
 export const addRequestIfNew = async (transaction) => {
-  const { id: transactionId, hash, callType } = transaction;
+  const { id: transactionId, hash } = transaction;
   const [request, created] = await Request.findOrCreate({
     where: {
       transactionId,
@@ -78,7 +78,6 @@ export const addRequestIfNew = async (transaction) => {
     defaults: {
       transactionId,
       hash,
-      callType,
       transaction,
     },
   });
