@@ -55,16 +55,6 @@ export const getUserIdByEmail = async (email) => {
   return user.id;
 };
 
-export const addRequest = async (transaction) => {
-  const { id: transactionId, dedupe_id, callType } = transaction;
-  await Request.create({
-    transactionId,
-    dedupe_id,
-    callType,
-    transaction,
-  });
-};
-
 export const addRequestIfNew = async (transaction) => {
   const { id: transactionId, hash, callType } = transaction;
   const [request, created] = await Request.findOrCreate({
