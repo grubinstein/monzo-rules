@@ -126,3 +126,43 @@ describe("mostRecentRequest", () => {
     expect(result).toBe(false);
   });
 });
+
+let numRequests;
+
+describe("addRequestIfNew", () => {
+  beforeEach(async () => {
+    await Request.destroy({ truncate: true });
+    await Request.bulkCreate([
+      {
+        transactionId: "trans1",
+        transaction: {
+          id: "trans1",
+          hash: "hash1",
+          transaction: { some: "json", data: "here" },
+        },
+        hash: "hash1",
+      },
+    ]);
+    numRequests = await Request.count();
+  });
+  it("Does not store if request with same transactionId and hash exists", async () => {
+    const transaction = {
+      id: "trans1",
+      transaction: { some: "json" },
+      hash: "hash1",
+    };
+    await db.addRequestIfNew(transaction);
+    const newNumRequests = await Request.count();
+    expect(newNumRequests).toBe(numRequests);
+  });
+  it("Does not store if request with same transactionId, longer json exists from within last second", async () => {
+    const transaction = {
+      id: "trans1",
+      hash: "hash2",
+      transaction: { some: "json", data: "ere" },
+    };
+    await db.addRequestIfNew(transaction);
+    const newNumRequests = await Request.count();
+    expect(newNumRequests).toBe(numRequests);
+  });
+});
