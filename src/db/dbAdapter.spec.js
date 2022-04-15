@@ -97,7 +97,6 @@ describe("mostRecentRequest", () => {
     await Request.create({
       transactionId: "12345",
       hash: "12309jfejiooskefnk",
-      callType: "transaction.created",
       transaction: mockTransaction,
     });
     const result = await db.mostRecentRequest(mockTransaction.id, 1);
@@ -107,7 +106,6 @@ describe("mostRecentRequest", () => {
     await Request.create({
       transactionId: "tx_0000AHzLvcFBuOcELkER18",
       hash: "12309jfejiooskefnk",
-      callType: "transaction.created",
       transaction: mockTransaction,
     });
     const result = await db.mostRecentRequest(mockTransaction.id, 3);
@@ -117,13 +115,11 @@ describe("mostRecentRequest", () => {
     await Request.create({
       transactionId: "tx_0000AHzLvcFBuOcELkER18",
       hash: "12309jfejiooskefnk",
-      callType: "transaction.created",
       transaction: mockTransaction,
     });
     await Request.create({
       transactionId: "tx_0000AHzLvcFBuOcELkER18",
       hash: "12309jfejiooskefnk",
-      callType: "transaction.created",
       transaction: mockTransaction,
     });
     const result = await db.mostRecentRequest(mockTransaction.id, 1);
