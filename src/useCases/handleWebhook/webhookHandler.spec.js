@@ -8,6 +8,7 @@ const logger = { log: jest.fn() };
 const db = {
   addRequestIfNew: jest.fn(),
   mostRecentRequest: jest.fn(),
+  logProcessingAndPrimality: jest.fn(),
 };
 
 const webhookHandler = webhookComposer({
@@ -32,6 +33,9 @@ beforeEach(() => {
   });
   db.mostRecentRequest.mockReturnValue(true);
   db.addRequestIfNew.mockReturnValue([false]);
+  db.logProcessingAndPrimality.mockImplementation((transaction) => {
+    transaction.firstProcessed = true;
+  });
 });
 
 describe("webhook handler", () => {
@@ -109,6 +113,16 @@ describe("webhook handler", () => {
     expect(Object.keys(processTransaction.mock.calls[0][0])).toEqual(
       expect.arrayContaining(Object.keys(mockWebhookRequest.body.data))
     );
+  });
+  it("passes transaction to logProcessingAndPrimality", async () => {
+    db.addRequestIfNew.mockReturnValue([true]);
+    await webhookHandler(mockWebhookRequest, res);
+    expect(db.logProcessingAndPrimality).toHaveBeenCalled();
+  });
+  it("retains info added to transaction in logProcessingAndPrimality", async () => {
+    db.addRequestIfNew.mockReturnValue([true]);
+    await webhookHandler(mockWebhookRequest, res);
+    expect(processTransaction.mock.calls[0][0].firstProcessed).toBe(true);
   });
   it("returns 200", async () => {
     await webhookHandler(mockWebhookRequest, res);

@@ -23,6 +23,7 @@ const createWebhookHandler = ({ hash, processTransaction, db, logger }) => {
       created && (await db.mostRecentRequest(transaction.id, request));
     logRequest(newRequest, transaction);
     if (newRequest) {
+      await db.logProcessingAndPrimality(transaction);
       await processTransaction(transaction);
     }
     res.status(200).send();
