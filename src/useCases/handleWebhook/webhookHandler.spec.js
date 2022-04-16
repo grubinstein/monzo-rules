@@ -31,6 +31,7 @@ beforeEach(() => {
     res[k].mockReturnValue(res);
   });
   db.mostRecentRequest.mockReturnValue(true);
+  db.addRequestIfNew.mockReturnValue([false]);
 });
 
 describe("webhook handler", () => {
@@ -38,7 +39,7 @@ describe("webhook handler", () => {
     await webhookHandler(mockWebhookRequest, res);
     expect(db.addRequestIfNew).toHaveBeenCalled();
   });
-  it("adds hash to transaction before adding call type", async () => {
+  it("adds hash to transaction before passing to db", async () => {
     const contentHash = hash.MD5(mockWebhookRequest.body.data);
     await webhookHandler(mockWebhookRequest, res);
     expect(db.addRequestIfNew.mock.calls[0][0].hash).toBe(contentHash);
@@ -48,30 +49,28 @@ describe("webhook handler", () => {
     expect(logger.log).toHaveBeenCalled();
   });
   it("it logs Handling message for new transactions/updates", async () => {
-    db.addRequestIfNew.mockReturnValue(true);
+    db.addRequestIfNew.mockReturnValue([true]);
     await webhookHandler(mockWebhookRequest, res);
     const {
-      type,
       data: { description, id },
     } = mockWebhookRequest.body;
     expect(logger.log.mock.calls[0][0]).toBe(`Handling: ${description} ${id}`);
   });
   it("it logs Repeat message for duplicate transactions/updates", async () => {
-    db.addRequestIfNew.mockReturnValue(false);
+    db.addRequestIfNew.mockReturnValue([false]);
     await webhookHandler(mockWebhookRequest, res);
     const {
-      type,
       data: { description, id },
     } = mockWebhookRequest.body;
     expect(logger.log.mock.calls[0][0]).toBe(`Repeat: ${description} ${id}`);
   });
   it("doesn't call processTransaction for duplicate transactions/updates", async () => {
-    db.addRequestIfNew.mockReturnValue(false);
+    db.addRequestIfNew.mockReturnValue([false]);
     await webhookHandler(mockWebhookRequest, res);
     expect(processTransaction).not.toHaveBeenCalled();
   });
   it("passes transactionId and createdRequestId to mostRecentRequest if request stored", async () => {
-    db.addRequestIfNew.mockReturnValue(2);
+    db.addRequestIfNew.mockReturnValue([true, 2]);
     await webhookHandler(mockWebhookRequest, res);
     expect(db.mostRecentRequest).toHaveBeenCalled();
     expect(db.mostRecentRequest.mock.calls[0]).toEqual([
@@ -80,33 +79,32 @@ describe("webhook handler", () => {
     ]);
   });
   it("doesn't call processTransaction if newer request is stored within 10 seconds", async () => {
-    db.addRequestIfNew.mockReturnValue(true);
+    db.addRequestIfNew.mockReturnValue([true]);
     db.mostRecentRequest.mockReturnValue(false);
     await webhookHandler(mockWebhookRequest, res);
     expect(processTransaction).not.toHaveBeenCalled();
   });
   it("logs Repeat message if newer request is stored within 1 second", async () => {
-    db.addRequestIfNew.mockReturnValue(true);
+    db.addRequestIfNew.mockReturnValue([true]);
     db.mostRecentRequest.mockReturnValue(false);
     await webhookHandler(mockWebhookRequest, res);
     const {
-      type,
       data: { description, id },
     } = mockWebhookRequest.body;
     expect(logger.log.mock.calls[0][0]).toBe(`Repeat: ${description} ${id}`);
   });
   it("passes id to logger", async () => {
-    db.addRequestIfNew.mockReturnValue(false);
+    db.addRequestIfNew.mockReturnValue([false]);
     await webhookHandler(mockWebhookRequest, res);
     expect(logger.log.mock.calls[0][1]).toBe(mockWebhookRequest.body.data.id);
   });
   it("calls processTransaction for new transactions/updates", async () => {
-    db.addRequestIfNew.mockReturnValue(true);
+    db.addRequestIfNew.mockReturnValue([true]);
     await webhookHandler(mockWebhookRequest, res);
     expect(processTransaction).toHaveBeenCalled();
   });
   it("passes transaction to processTransaction", async () => {
-    db.addRequestIfNew.mockReturnValue(true);
+    db.addRequestIfNew.mockReturnValue([true]);
     await webhookHandler(mockWebhookRequest, res);
     expect(Object.keys(processTransaction.mock.calls[0][0])).toEqual(
       expect.arrayContaining(Object.keys(mockWebhookRequest.body.data))
