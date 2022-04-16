@@ -6,16 +6,16 @@ const { Rule, Macro, User, Request } = Models;
 export const storeUserAccessData = async ({
   access_token: accessToken,
   refresh_token: refreshToken,
-  user_id: userId,
+  user_id: monzoUserId,
 }) => {
-  const email = "gabrielrubinstein1@googlemail.com";
-  const user = await User.findOne({ where: { email } });
+  const user = await User.findOne({ where: { monzoUserId } });
   if (!user) {
+    const email = "gabrielrubinstein1@googlemail.com";
     await User.create({
       email,
       accessToken,
       refreshToken,
-      userId,
+      monzoUserId,
     });
     return;
   }

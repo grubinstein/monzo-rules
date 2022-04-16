@@ -37,6 +37,20 @@ beforeEach(async () => {
   };
 });
 
+describe("storeUserAccessData", () => {
+  it("updates correct user", async () => {
+    await User.create(mockUser);
+    await db.storeUserAccessData({
+      access_token: "access789",
+      refresh_token: "refresh789",
+      user_id: "monzouser123",
+    });
+    const user = await User.findOne({ monzoUserId: "monzouser123" });
+    expect(user.accessToken).toBe("access789");
+    expect(user.refreshToken).toBe("refresh789");
+  });
+});
+
 describe("getUserByAccountId", () => {
   it("throws error if no accountId provided", async () => {
     const runWithoutId = () => db.getUserByAccountId();
