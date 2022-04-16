@@ -45,7 +45,7 @@ describe("storeUserAccessData", () => {
       refresh_token: "refresh789",
       user_id: "monzouser123",
     });
-    const user = await User.findOne({ monzoUserId: "monzouser123" });
+    const user = await User.findOne({ where: { monzoUserId: "monzouser123" } });
     expect(user.accessToken).toBe("access789");
     expect(user.refreshToken).toBe("refresh789");
   });
@@ -102,6 +102,10 @@ describe("getUserIdByEmail", () => {
   it("throws error if no email provided", async () => {
     const runWithoutEmail = () => db.getUserIdByEmail();
     expect(runWithoutEmail).rejects.toThrow();
+  });
+  it("throws error if matching user not found", async () => {
+    const runWithoutUser = () => db.getUserIdByEmail("some@email.com");
+    expect(runWithoutUser).rejects.toThrow();
   });
   it("provides correct user ID", async () => {
     const user = await User.create(mockUser);
