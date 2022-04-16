@@ -14,19 +14,23 @@ const createWebhookHandler = ({ hash, processTransaction, db, logger }) => {
   };
 
   const handleWebhook = async (req, res) => {
-    const transaction = getTransactionWithType(req);
-    const [created, request] = await db.addRequestIfNew(transaction);
-    if (created) {
-      await wait(1000);
+    try {
+      const transaction = getTransactionWithType(req);
+      const [created, request] = await db.addRequestIfNew(transaction);
+      if (created) {
+        await wait(1000);
+      }
+      const newRequest =
+        created && (await db.mostRecentRequest(transaction.id, request));
+      if (newRequest) {
+        await db.logProcessingAndPrimality(transaction);
+        await processTransaction(transaction);
+      }
+      logRequest(newRequest, transaction);
+      res.status(200).send();
+    } catch (e) {
+      logger.log("Error handling webhook", req.body.data);
     }
-    const newRequest =
-      created && (await db.mostRecentRequest(transaction.id, request));
-    logRequest(newRequest, transaction);
-    if (newRequest) {
-      await db.logProcessingAndPrimality(transaction);
-      await processTransaction(transaction);
-    }
-    res.status(200).send();
   };
 
   const wait = async (ms) => {

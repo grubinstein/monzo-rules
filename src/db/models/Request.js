@@ -16,6 +16,12 @@ Request.init(
     hash: {
       type: Sequelize.STRING,
     },
+    processingStarted: {
+      type: Sequelize.DATE,
+    },
+    firstProcessed: {
+      type: Sequelize.BOOLEAN,
+    },
   },
   {
     sequelize,

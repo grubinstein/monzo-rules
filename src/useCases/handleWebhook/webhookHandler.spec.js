@@ -130,4 +130,20 @@ describe("webhook handler", () => {
     expect(res.status.mock.calls[0][0]).toBe(200);
     expect(res.send).toHaveBeenCalled();
   });
+  it("handles errors from addRequestIfNew", async () => {
+    db.addRequestIfNew.mockRejectedValueOnce(new Error());
+    await webhookHandler(mockWebhookRequest, res);
+    expect(logger.log).toHaveBeenCalled();
+    expect(logger.log.mock.calls[0][0]).toBe("Error handling webhook");
+    expect(logger.log.mock.calls[0][1]).toBe(mockWebhookRequest.body.data);
+  });
+  it("handles errors from logProcessingAndPrimality", async () => {
+    db.addRequestIfNew.mockReturnValue(true);
+    db.mostRecentRequest.mockReturnValue(true);
+    db.logProcessingAndPrimality.mockRejectedValueOnce(new Error());
+    await webhookHandler(mockWebhookRequest, res);
+    expect(logger.log).toHaveBeenCalled();
+    expect(logger.log.mock.calls[0][0]).toBe("Error handling webhook");
+    expect(logger.log.mock.calls[0][1]).toBe(mockWebhookRequest.body.data);
+  });
 });

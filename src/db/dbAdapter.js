@@ -1,5 +1,6 @@
 import Models from "./relations.js";
-import sequelize from "sequelize";
+import seq from "sequelize";
+import sequelizeInstance from "./sequelize.js";
 const { Rule, Macro, User, Request } = Models;
 
 export const storeUserAccessData = async ({
@@ -62,19 +63,18 @@ export const addRequestIfNew = async (transaction) => {
   const [request, created] = await Request.findOrCreate({
     where: {
       transactionId,
-      [sequelize.Op.or]: [
+      [seq.Op.or]: [
         { hash },
         {
-          [sequelize.Op.and]: [
+          [seq.Op.and]: [
             {
               createdAt: {
-                [sequelize.Op.gte]: oneSecondAgo,
+                [seq.Op.gte]: oneSecondAgo,
               },
             },
-            sequelize.where(
-              sequelize.fn("LENGTH", sequelize.col("transaction")),
-              { [sequelize.Op.gt]: newTransactionLength }
-            ),
+            seq.where(seq.fn("LENGTH", seq.col("transaction")), {
+              [seq.Op.gt]: newTransactionLength,
+            }),
           ],
         },
       ],
@@ -93,11 +93,41 @@ export const mostRecentRequest = async (transactionId, id) => {
     where: {
       transactionId,
       id: {
-        [sequelize.Op.gt]: id,
+        [seq.Op.gt]: id,
       },
     },
   });
   return !request;
+};
+
+export const logProcessingAndPrimality = async (transaction) => {
+  const { id: transactionId, hash } = transaction;
+  transaction.processingStarted = new Date();
+  await sequelizeInstance.transaction(async (t) => {
+    const processedRequest = await Request.findOne(
+      {
+        where: {
+          transactionId,
+          firstProcessed: true,
+        },
+      },
+      { transaction: t }
+    );
+    transaction.firstProcessed = !processedRequest;
+    await Request.update(
+      {
+        processingStarted: transaction.processingStarted,
+        firstProcessed: transaction.firstProcessed,
+      },
+      {
+        where: {
+          transactionId,
+          hash,
+        },
+        transaction: t,
+      }
+    );
+  });
 };
 
 export const addRule = async (ruleObject) => {

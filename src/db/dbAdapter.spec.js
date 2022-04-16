@@ -1,5 +1,5 @@
 import Models from "./relations.js";
-const { Rule, Macro, User, Request } = Models;
+const { User, Request } = Models;
 import * as db from "./dbAdapter.js";
 import sequelize from "./sequelize.js";
 import mockTransaction from "../../test/mockTransaction.js";
@@ -26,6 +26,7 @@ const wait = async (ms) => {
 
 beforeEach(async () => {
   await User.destroy({ truncate: true });
+  await Request.destroy({ truncate: true });
   mockUser = {
     email: "user@mail.com",
     accessToken: "access123",
@@ -134,7 +135,6 @@ let numRequests;
 
 describe("addRequestIfNew", () => {
   beforeEach(async () => {
-    await Request.destroy({ truncate: true });
     await Request.bulkCreate([
       {
         transactionId: "trans1",
@@ -190,13 +190,26 @@ describe("addRequestIfNew", () => {
     expect(newNumRequests).toBe(numRequests + 1);
   });
   it("stores if request has same transacitonId, different hash and is created more than 1 second later", async () => {
-    await wait(1001);
+    await wait(2011);
     const transaction = {
       id: "trans1",
       hash: "hash2",
       transaction: { some: "json", data: "here" },
     };
     await db.addRequestIfNew(transaction);
+    const newNumRequests = await Request.count();
+    expect(newNumRequests).toBe(numRequests + 1);
+  });
+  it("stores only one of simultaneous requests", async () => {
+    const transaction = {
+      id: "trans5",
+      hash: "hash5",
+      transaction: { some: "json", data: "here" },
+    };
+    await Promise.all([
+      db.addRequestIfNew(transaction).catch((e) => e),
+      db.addRequestIfNew(transaction).catch((e) => e),
+    ]);
     const newNumRequests = await Request.count();
     expect(newNumRequests).toBe(numRequests + 1);
   });
@@ -231,7 +244,9 @@ describe("addRequestIfNew", () => {
         hash: "hash1",
       },
     });
-    expect(result[1]).toEqual(expect.objectContaining(request.dataValues));
+    expect(request.dataValues).toEqual(
+      expect.objectContaining(result[1].dataValues)
+    );
   });
   it("stores transactionId, hash, and transaction", async () => {
     const transaction = {
@@ -255,3 +270,123 @@ describe("addRequestIfNew", () => {
   });
 });
 
+describe("logProcessingAndPrimality", () => {
+  beforeEach(async () => {
+    await Request.bulkCreate([
+      {
+        transactionId: "trans1",
+        transaction: {
+          id: "trans1",
+          hash: "hash1",
+          transaction: { some: "json", data: "here" },
+        },
+        hash: "hash1",
+      },
+      {
+        transactionId: "trans1",
+        transaction: {
+          id: "trans1",
+          hash: "hash2",
+          transaction: { some: "json", data: "here" },
+        },
+        hash: "hash2",
+      },
+      {
+        transactionId: "trans2",
+        transaction: {
+          id: "trans2",
+          hash: "hash2",
+          transaction: { some: "json", data: "here" },
+        },
+        hash: "hash2",
+        firstProcessed: true,
+        processingStarted: new Date(),
+      },
+    ]);
+    numRequests = await Request.count();
+  });
+  it("stores processing started", async () => {
+    const transaction = {
+      id: "trans1",
+      transaction: { some: "json" },
+      hash: "hash1",
+    };
+    await db.logProcessingAndPrimality(transaction);
+    const request = await Request.findOne({
+      where: { transactionId: "trans1", hash: "hash1" },
+    });
+    expect(request.processingStarted instanceof Date).toBe(true);
+  });
+  it("stores firstProcessed if no processed request with same transactionId exists", async () => {
+    const transaction = {
+      id: "trans1",
+      transaction: { some: "json" },
+      hash: "hash1",
+    };
+    await db.logProcessingAndPrimality(transaction);
+    const request = await Request.findOne({
+      where: { transactionId: "trans1", hash: "hash1" },
+    });
+    expect(request.firstProcessed).toBe(true);
+  });
+  it("stores firstProcessed on transaction object if no processed request with same transId exists", async () => {
+    const transaction = {
+      id: "trans1",
+      transaction: { some: "json" },
+      hash: "hash1",
+    };
+    await db.logProcessingAndPrimality(transaction);
+    expect(transaction.firstProcessed).toBe(true);
+  });
+  it("stores firstProcessed false if processed request with same transactionId exists", async () => {
+    const transaction = {
+      id: "trans2",
+      transaction: { some: "json" },
+      hash: "hash2",
+    };
+    await db.logProcessingAndPrimality(transaction);
+    const request = await Request.findOne({
+      where: { transactionId: "trans2", hash: "hash2" },
+    });
+    expect(request.firstProcessed).toBe(false);
+  });
+  it("stores firstProcessed false on transaction object if processed request with same transId exists", async () => {
+    const transaction = {
+      id: "trans2",
+      transaction: { some: "json" },
+      hash: "hash2",
+    };
+    await db.logProcessingAndPrimality(transaction);
+    expect(transaction.firstProcessed).toBe(false);
+  });
+  it("stores max one transaction as first processed", async () => {
+    const trans1 = {
+      id: "trans1",
+      transaction: { some: "json" },
+      hash: "hash1",
+    };
+    const trans2 = {
+      id: "trans1",
+      transaction: { some: "json" },
+      hash: "hash2",
+    };
+    await Promise.all([
+      db.logProcessingAndPrimality(trans1).catch((e) => e),
+      db.logProcessingAndPrimality(trans2).catch((e) => e),
+    ]);
+    expect(
+      (trans1.firstProcessed && !(trans1.firstProcessed instanceof Error)) ||
+        (trans2.firstProcessed && !(trans2.firstProcessed instanceof Error))
+    ).toBe(true);
+    expect(
+      !trans1.firstProcessed ||
+        trans1.firstProcessed instanceof Error ||
+        !trans2.firstProcessed ||
+        trans2.firstProcessed instanceof Error
+    ).toBe(true);
+    const requests = await Request.findAll({
+      where: { transactionId: "trans1" },
+    });
+    expect(requests.filter((r) => r.firstProcessed).length).toBe(1);
+  });
+});
