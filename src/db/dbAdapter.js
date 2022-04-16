@@ -57,6 +57,8 @@ export const getUserIdByEmail = async (email) => {
 
 export const addRequestIfNew = async (transaction) => {
   const { id: transactionId, hash } = transaction;
+  const oneSecondAgo = new Date(Date.now() - 1000);
+  const newTransactionLength = JSON.stringify(transaction).length;
   const [request, created] = await Request.findOrCreate({
     where: {
       transactionId,
@@ -64,12 +66,14 @@ export const addRequestIfNew = async (transaction) => {
         { hash },
         {
           [sequelize.Op.and]: [
-            sequelize.where(sequelize.fn("date", sequelize.col("createdAt")), {
-              [sequelize.Op.gte]: new Date(Date.now() - 1000),
-            }),
+            {
+              createdAt: {
+                [sequelize.Op.gte]: oneSecondAgo,
+              },
+            },
             sequelize.where(
               sequelize.fn("LENGTH", sequelize.col("transaction")),
-              { [sequelize.Op.gt]: JSON.stringify(transaction).length }
+              { [sequelize.Op.gt]: newTransactionLength }
             ),
           ],
         },
@@ -81,7 +85,7 @@ export const addRequestIfNew = async (transaction) => {
       transaction,
     },
   });
-  return created && request.id;
+  return [created, request];
 };
 
 export const mostRecentRequest = async (transactionId, id) => {

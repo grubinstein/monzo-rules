@@ -1,11 +1,8 @@
 import Models from "./relations.js";
 const { Rule, Macro, User, Request } = Models;
 import * as db from "./dbAdapter.js";
-import { jest } from "@jest/globals";
 import sequelize from "./sequelize.js";
 import mockTransaction from "../../test/mockTransaction.js";
-
-jest.useFakeTimers();
 
 beforeAll(async () => {
   await sequelize.sync();
@@ -19,6 +16,12 @@ mockUser = {
   monzoUserId: "monzouser123",
   password: "pass1234",
   monzoAccountId: "monzoaccount123",
+};
+
+const wait = async (ms) => {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 };
 
 beforeEach(async () => {
@@ -145,7 +148,8 @@ describe("addRequestIfNew", () => {
     ]);
     numRequests = await Request.count();
   });
-  it("Does not store if request with same transactionId and hash exists", async () => {
+
+  it("doesn't store if request with same transactionId and hash exists", async () => {
     const transaction = {
       id: "trans1",
       transaction: { some: "json" },
@@ -155,7 +159,7 @@ describe("addRequestIfNew", () => {
     const newNumRequests = await Request.count();
     expect(newNumRequests).toBe(numRequests);
   });
-  it("Does not store if request with same transactionId, longer json exists from within last second", async () => {
+  it("doesn't store if request with same transactionId, longer json exists from within last second", async () => {
     const transaction = {
       id: "trans1",
       hash: "hash2",
@@ -165,4 +169,89 @@ describe("addRequestIfNew", () => {
     const newNumRequests = await Request.count();
     expect(newNumRequests).toBe(numRequests);
   });
+  it("stores if request has different transactionId", async () => {
+    const transaction = {
+      id: "trans2",
+      hash: "hash1",
+      transaction: { some: "json", data: "here" },
+    };
+    await db.addRequestIfNew(transaction);
+    const newNumRequests = await Request.count();
+    expect(newNumRequests).toBe(numRequests + 1);
+  });
+  it("stores if request has same transactionId, different hash and longer json", async () => {
+    const transaction = {
+      id: "trans1",
+      hash: "hash2",
+      transaction: { some: "json", data: "there" },
+    };
+    await db.addRequestIfNew(transaction);
+    const newNumRequests = await Request.count();
+    expect(newNumRequests).toBe(numRequests + 1);
+  });
+  it("stores if request has same transacitonId, different hash and is created more than 1 second later", async () => {
+    await wait(1001);
+    const transaction = {
+      id: "trans1",
+      hash: "hash2",
+      transaction: { some: "json", data: "here" },
+    };
+    await db.addRequestIfNew(transaction);
+    const newNumRequests = await Request.count();
+    expect(newNumRequests).toBe(numRequests + 1);
+  });
+  it("returns false in first element if not created", async () => {
+    const transaction = {
+      id: "trans1",
+      transaction: { some: "json" },
+      hash: "hash1",
+    };
+    const result = await db.addRequestIfNew(transaction);
+    expect(result[0]).toBe(false);
+  });
+  it("returns true in first element if created", async () => {
+    const transaction = {
+      id: "trans2",
+      hash: "hash1",
+      transaction: { some: "json", data: "here" },
+    };
+    const result = await db.addRequestIfNew(transaction);
+    expect(result[0]).toBe(true);
+  });
+  it("returns request in second element if created", async () => {
+    const transaction = {
+      id: "trans2",
+      hash: "hash1",
+      transaction: { some: "json", data: "here" },
+    };
+    const result = await db.addRequestIfNew(transaction);
+    const request = await Request.findOne({
+      where: {
+        transactionId: "trans2",
+        hash: "hash1",
+      },
+    });
+    expect(result[1]).toEqual(expect.objectContaining(request.dataValues));
+  });
+  it("stores transactionId, hash, and transaction", async () => {
+    const transaction = {
+      id: "trans2",
+      hash: "hash1",
+      transaction: { some: "json", data: "here" },
+    };
+    const result = await db.addRequestIfNew(transaction);
+    const storedRequest = await Request.findByPk(result[1].id);
+    expect(storedRequest).toEqual(
+      expect.objectContaining({
+        transactionId: "trans2",
+        hash: "hash1",
+        transaction: {
+          id: "trans2",
+          hash: "hash1",
+          transaction: { some: "json", data: "here" },
+        },
+      })
+    );
+  });
 });
+
