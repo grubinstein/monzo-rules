@@ -130,24 +130,26 @@ export const logProcessingAndPrimality = async (transaction) => {
   });
 };
 
-export const addRule = async (ruleObject) => {
-  const { name, filters, UserId, macros } = ruleObject;
+export const addRule = async ({ name, filters, UserId, macros }) => {
   const rule = await Rule.create({ name, filters, UserId });
   if (macros && macros.length) {
-    for (let i = 0; i < macros.length; i++) {
-      let macro = macros[i];
-      if (typeof macro === "string") {
-        macro = await Macro.findByPk(macro);
-      } else if (!(macro instanceof Macro)) {
-        macro = await Macro.create(macro);
-      }
-      await rule.addMacro(macro);
+    for (const macro of macros) {
+      await addMacroToRule(macro, rule);
     }
   }
 };
 
-export const getAllRules = async () => {
-  const rules = await Rule.findAll({ include: Macro });
+export const addMacroToRule = async (macro, rule) => {
+  if (typeof macro === "number") {
+    macro = await Macro.findByPk(macro);
+  } else if (!(macro instanceof Macro)) {
+    macro = await Macro.create(macro);
+  }
+  await rule.addMacro(macro);
+};
+
+export const getAllRules = async (UserId) => {
+  const rules = await Rule.findAll({ where: { UserId }, include: Macro });
   return rules.map((rule) => {
     rule.macros = rule.Macros;
     return rule;
