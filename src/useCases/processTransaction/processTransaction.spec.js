@@ -10,7 +10,7 @@ const evaluatingFunctions = {
   text: jest.fn(),
 };
 const db = {
-  getAllRules: jest.fn(),
+  getAllRulesForUser: jest.fn(),
   getUserByAccountId: jest.fn(),
 };
 const logger = { log: jest.fn().mockName("logger.log") };
@@ -23,6 +23,7 @@ const processTransaction = mockWebhookComposer({
 }).processTransaction;
 
 const mockUser = {
+  id: 5,
   accessToken: "abc123",
   refreshToken: "123abc",
 };
@@ -39,7 +40,7 @@ const mockProcessTransaction = async (transaction, rules, mockValues) => {
       evaluatingFunctions[func].mockReturnValueOnce(value);
     }
   }
-  db.getAllRules.mockReturnValue(rules);
+  db.getAllRulesForUser.mockReturnValue(rules);
   db.getUserByAccountId.mockReturnValue(mockUser);
   await Promise.resolve();
   await processTransaction(transaction);
@@ -47,6 +48,18 @@ const mockProcessTransaction = async (transaction, rules, mockValues) => {
 };
 
 describe("runs rules for transaction", () => {
+  it("passes account_id to getUserByAccountId", async () => {
+    await mockProcessTransaction(mockTransaction, []);
+    expect(db.getUserByAccountId).toHaveBeenCalled();
+    expect(db.getUserByAccountId.mock.calls[0][0]).toBe(
+      mockTransaction.account_id
+    );
+  });
+  it("passes returned userId to getAllRulesForUser", async () => {
+    await mockProcessTransaction(mockTransaction, []);
+    expect(db.getAllRulesForUser).toHaveBeenCalled();
+    expect(db.getAllRulesForUser.mock.calls[0][0]).toBe(mockUser.id);
+  });
   it("calls evaluating function with filter and transaction until one fails", async () => {
     await mockProcessTransaction(
       mockTransaction,
@@ -76,7 +89,7 @@ describe("runs rules for transaction", () => {
     ]);
     expect(evaluatingFunctions.amount).not.toHaveBeenCalled();
   });
-  it("logs rule passed if no rules", async () => {
+  it("logs rule passed if no filters", async () => {
     await mockProcessTransaction(
       mockTransaction,
       [{ name: "rule1", filters: [] }],

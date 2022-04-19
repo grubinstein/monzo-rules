@@ -6,7 +6,7 @@ const createProcessTransaction = ({
 }) => {
   const processTransaction = async (transaction) => {
     const user = await db.getUserByAccountId(transaction.account_id);
-    const rules = await db.getAllRules();
+    const rules = await db.getAllRulesForUser(user.id);
     runRulesForTransaction(rules, transaction, user);
   };
 
