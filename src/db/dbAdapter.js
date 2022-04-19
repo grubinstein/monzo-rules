@@ -148,7 +148,7 @@ export const addMacroToRule = async (macro, rule) => {
   await rule.addMacro(macro);
 };
 
-export const getAllRules = async (UserId) => {
+export const getAllRulesForUser = async (UserId) => {
   const rules = await Rule.findAll({ where: { UserId }, include: Macro });
   return rules.map((rule) => {
     rule.macros = rule.Macros;

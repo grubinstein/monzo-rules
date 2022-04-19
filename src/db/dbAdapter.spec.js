@@ -520,7 +520,7 @@ describe("rule management", () => {
     });
   });
 
-  describe("getAllRules", () => {
+  describe("getAllRulesForUser", () => {
     let UserId2;
     beforeAll(() => {
       const mockUser = {
@@ -565,7 +565,7 @@ describe("rule management", () => {
       await db.addRule(ruleWithMacroInstance);
     });
     it("returns all rules for UserId", async () => {
-      const rules = await db.getAllRules(UserId);
+      const rules = await db.getAllRulesForUser(UserId);
       expect(rules.map(({ name, filters }) => ({ name, filters }))).toEqual([
         { name: "Rule1", filters: [{ type: "direction" }, { type: "amount" }] },
         { name: "Rule2", filters: [{ type: "direction" }, { type: "amount" }] },
