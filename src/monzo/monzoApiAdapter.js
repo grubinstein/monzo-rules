@@ -6,13 +6,13 @@ const createMonzoApiAdapter = ({ getMonzoClient, config, crypto }) => {
     if (
       webhooks.find(
         (webhook) =>
-          webhook.account_id == user.accountId && webhook.url == webhookUrl
+          webhook.account_id == user.monzoAccountId && webhook.url == webhookUrl
       )
     ) {
       return;
     }
     const params = {
-      account_id: user.accountId,
+      account_id: user.monzoAccountId,
       url: webhookUrl,
     };
     const monzoClient = getMonzoClient(user);
@@ -22,7 +22,7 @@ const createMonzoApiAdapter = ({ getMonzoClient, config, crypto }) => {
   const listWebhooks = async (user) => {
     const monzoClient = getMonzoClient(user);
     const response = await monzoClient.get(
-      `/webhooks?account_id=${user.accountId}`
+      `/webhooks?account_id=${user.monzoAccountId}`
     );
     return response.data.webhooks;
   };
@@ -36,7 +36,7 @@ const createMonzoApiAdapter = ({ getMonzoClient, config, crypto }) => {
   const getPots = async (user) => {
     const monzoClient = getMonzoClient(user);
     const response = await monzoClient.get(
-      `/pots?current_account_id=${user.accountId}`
+      `/pots?current_account_id=${user.monzoAccountId}`
     );
     return response.data.pots;
   };
@@ -44,7 +44,7 @@ const createMonzoApiAdapter = ({ getMonzoClient, config, crypto }) => {
   const getCurrentBalance = async (user) => {
     const monzoClient = getMonzoClient(user);
     const response = await monzoClient.get(
-      `/balance?account_id=${user.accountId}`
+      `/balance?account_id=${user.monzoAccountId}`
     );
     return response.data.balance;
   };
@@ -76,8 +76,8 @@ const createMonzoApiAdapter = ({ getMonzoClient, config, crypto }) => {
     const potId = await getPotId(user, potName);
     const dedupe_id = id || crypto.randomBytes(16).toString("hex");
     const params = {
-      destination_account_id: user.accountId,
-      source_account_id: user.accountId,
+      destination_account_id: user.monzoAccountId,
+      source_account_id: user.monzoAccountId,
       amount,
       dedupe_id,
     };
@@ -89,8 +89,8 @@ const createMonzoApiAdapter = ({ getMonzoClient, config, crypto }) => {
     const potId = await getPotId(user, pot);
     const dedupe_id = id || crypto.randomBytes(16).toString("hex");
     const params = {
-      destination_account_id: user.accountId,
-      source_account_id: user.accountId,
+      destination_account_id: user.monzoAccountId,
+      source_account_id: user.monzoAccountId,
       amount,
       dedupe_id,
     };
@@ -104,7 +104,7 @@ const createMonzoApiAdapter = ({ getMonzoClient, config, crypto }) => {
     const monzoClient = getMonzoClient(user);
     const response = await monzoClient.get("/transactions", {
       params: {
-        account_id: user.accountId,
+        account_id: user.monzoAccountId,
         since,
         before,
       },
@@ -120,7 +120,7 @@ const createMonzoApiAdapter = ({ getMonzoClient, config, crypto }) => {
     image_url = config.get("defaultNotifyImage")
   ) => {
     const params = {
-      account_id: user.accountId,
+      account_id: user.monzoAccountId,
       type: "basic",
       url,
       params: {

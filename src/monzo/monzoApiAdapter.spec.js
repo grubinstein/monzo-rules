@@ -29,7 +29,7 @@ const monzo = createMonzoApiAdapter({
   qs,
 });
 
-const mockUser = { accountId: "accountabc123" };
+const mockUser = { monzoAccountId: "accountabc123" };
 
 const callArgs = (func) => func.mock.calls[0];
 
@@ -47,11 +47,11 @@ describe("webhook management", () => {
   });
   describe("listWebhooks", () => {
     const { listWebhooks } = monzo;
-    it("calls get with accountId", async () => {
+    it("calls get with monzoAccountId", async () => {
       await listWebhooks(mockUser);
       expect(monzoClient.get).toHaveBeenCalled();
       expect(callArgs(monzoClient.get)[0]).toBe(
-        `/webhooks?account_id=${mockUser.accountId}`
+        `/webhooks?account_id=${mockUser.monzoAccountId}`
       );
     });
     it("returns webhooks", async () => {
@@ -67,7 +67,7 @@ describe("webhook management", () => {
   describe("registerWebHook", () => {
     const { registerWebHook } = monzo;
     it("does not create webhook if it already exists", async () => {
-      await registerWebHook({ accountId: "accountxyz789" });
+      await registerWebHook({ monzoAccountId: "accountxyz789" });
       expect(monzoClient.post).not.toHaveBeenCalled();
     });
     it("posts to webhooks", async () => {
@@ -78,7 +78,7 @@ describe("webhook management", () => {
     it("posts with account_id and webhook url", async () => {
       await registerWebHook(mockUser);
       expect(callArgs(monzoClient.post)[1]).toEqual({
-        account_id: mockUser.accountId,
+        account_id: mockUser.monzoAccountId,
         url: "www.test.com/hook",
       });
     });
@@ -90,7 +90,7 @@ describe("webhook management", () => {
           ],
         },
       }));
-      await registerWebHook({ accountId: "accountxyz789" });
+      await registerWebHook({ monzoAccountId: "accountxyz789" });
       expect(monzoClient.post).toHaveBeenCalled();
     });
     it("throws an error if no user is passed", async () => {
@@ -154,14 +154,14 @@ describe("getPotBalance", () => {
           },
     }));
   });
-  it("gets /balance with accountId if pot is current", async () => {
+  it("gets /balance with monzoAccountId if pot is current", async () => {
     await getPotBalance(mockUser, "current");
     expect(monzoClient.get).toHaveBeenCalled();
     expect(callArgs(monzoClient.get)[0]).toBe(
       `/balance?account_id=accountabc123`
     );
   });
-  it("gets /balance with accountId if pot is Current", async () => {
+  it("gets /balance with monzoAccountId if pot is Current", async () => {
     await getPotBalance(mockUser, "Current");
     expect(monzoClient.get).toHaveBeenCalled();
     expect(callArgs(monzoClient.get)[0]).toBe(
@@ -172,7 +172,7 @@ describe("getPotBalance", () => {
     const balance = await getPotBalance(mockUser, "Current");
     expect(balance).toBe(1500);
   });
-  it("gets /pots with accountId if pot is other", async () => {
+  it("gets /pots with monzoAccountId if pot is other", async () => {
     await getPotBalance(mockUser, "Savings");
     expect(monzoClient.get).toHaveBeenCalled();
     expect(callArgs(monzoClient.get)[0]).toBe(
@@ -206,8 +206,8 @@ describe("withdraw", () => {
   it("passes params in put", async () => {
     await withdraw(mockUser, "Savings", 150, "deduped");
     const params = {
-      destination_account_id: mockUser.accountId,
-      source_account_id: mockUser.accountId,
+      destination_account_id: mockUser.monzoAccountId,
+      source_account_id: mockUser.monzoAccountId,
       amount: 150,
       dedupe_id: "deduped",
     };
@@ -242,8 +242,8 @@ describe("deposit", () => {
   it("passes params in put", async () => {
     await deposit(mockUser, "Savings", 150, "deduped");
     const params = {
-      destination_account_id: mockUser.accountId,
-      source_account_id: mockUser.accountId,
+      destination_account_id: mockUser.monzoAccountId,
+      source_account_id: mockUser.monzoAccountId,
       amount: 150,
       dedupe_id: "deduped",
     };
@@ -277,10 +277,10 @@ describe("getTransactions", () => {
     expect(monzoClient.get).toHaveBeenCalled();
     expect(callArgs(monzoClient.get)[0]).toBe("/transactions");
   });
-  it("passes accountId in params", async () => {
+  it("passes monzoAccountId in params", async () => {
     await getTransactions(mockUser);
     expect(callArgs(monzoClient.get)[1].params.account_id).toBe(
-      mockUser.accountId
+      mockUser.monzoAccountId
     );
   });
   it("passes undefined for since and before if not passed", async () => {
@@ -306,9 +306,11 @@ describe("notify", () => {
     expect(monzoClient.post).toHaveBeenCalled();
     expect(callArgs(monzoClient.post)[0]).toBe("/feed");
   });
-  it("passes accountId", async () => {
+  it("passes monzoAccountId", async () => {
     await notify(mockUser);
-    expect(callArgs(monzoClient.post)[1].account_id).toBe(mockUser.accountId);
+    expect(callArgs(monzoClient.post)[1].account_id).toBe(
+      mockUser.monzoAccountId
+    );
   });
   it("passes type: basic", async () => {
     await notify(mockUser);
